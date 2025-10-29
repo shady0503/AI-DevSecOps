@@ -1,0 +1,35 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Installing Trivy for container scanning...
+      - wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | apt-key add -
+      - echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | tee -a /etc/apt/sources.list.d/trivy.list
+      - apt-get update
+      - apt-get install -y trivy
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=${COMMIT_HASH:=latest}
+      
+  build:
+    commands:
+      - echo Container security scan started on `date`
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - echo Scanning Docker image for vulnerabilities...
+      - trivy image --format json --output trivy-report.json $REPOSITORY_URI:$IMAGE_TAG || true
+      - trivy image --format sarif --output trivy-report.sarif $REPOSITORY_URI:$IMAGE_TAG || true
+      - trivy image $REPOSITORY_URI:$IMAGE_TAG || true
+      
+  post_build:
+    commands:
+      - echo Container scan completed on `date`
+      - echo Uploading container scan reports to S3...
+      - aws s3 cp trivy-report.json s3://$REPORTS_BUCKET/container-scan-reports/$CODEBUILD_BUILD_NUMBER/trivy-report.json --region eu-west-3
+      - aws s3 cp trivy-report.sarif s3://$REPORTS_BUCKET/container-scan-reports/$CODEBUILD_BUILD_NUMBER/trivy-report.sarif --region eu-west-3
+
+artifacts:
+  files:
+    - trivy-report.json
+    - trivy-report.sarif

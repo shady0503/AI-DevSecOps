@@ -1,0 +1,20 @@
+# AWS Configuration
+aws_region = "eu-west-3"  # Paris region
+
+# Project Configuration
+project_name = "social-media-api"
+environment  = "dev"
+
+# GitHub Configuration
+github_repo_owner = "shady0503"
+github_repo_name  = "Sample"
+github_branch     = "master"
+github_token      = "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"  # Replace with your token
+
+# Staging URL for DAST (update with EC2 public IP after deployment)
+# Run scripts/get-instance-ips.ps1 to get the IP, then update this
+staging_url = "http://REPLACE_WITH_STAGING_EC2_IP:8080"
+
+# Database Configuration
+db_username = "postgres"
+db_password = "postgres"  # CHANGE THIS!
