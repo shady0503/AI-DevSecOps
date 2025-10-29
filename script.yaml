@@ -1,0 +1,376 @@
+# Social Media Platform
+# Demonstrates: Many-to-many relationships, self-referencing, UUID primary keys
+
+BackendConfig:
+  project:
+    Project:
+      name: "SocialMediaAPI"
+      groupId: "com.social.platform"
+      language: JAVA
+      framework: SPRING_BOOT
+      javaVersion: 17
+      springBootVersion: "3.2.0"
+  database:
+    Database:
+      type: POSTGRESQL
+      name: "social_media_db"
+      host: "localhost"
+      port: 5432
+      tables:
+        - Table:
+            name: "users"
+            columns:
+              - Column:
+                  name: "id"
+                  type: UUID
+                  primary: true
+                  nullable: false
+              - Column:
+                  name: "username"
+                  type: STRING
+                  length: 50
+                  unique: true
+                  nullable: false
+              - Column:
+                  name: "email"
+                  type: STRING
+                  length: 100
+                  unique: true
+                  nullable: false
+              - Column:
+                  name: "full_name"
+                  type: STRING
+                  length: 100
+              - Column:
+                  name: "bio"
+                  type: TEXT
+              - Column:
+                  name: "profile_picture_url"
+                  type: STRING
+                  length: 255
+              - Column:
+                  name: "is_verified"
+                  type: BOOLEAN
+              - Column:
+                  name: "created_at"
+                  type: DATETIME
+                  nullable: false
+              - Column:
+                  name: "updated_at"
+                  type: DATETIME
+        - Table:
+            name: "user_follows"
+            columns:
+              - Column:
+                  name: "id"
+                  type: UUID
+                  primary: true
+                  nullable: false
+              - Column:
+                  name: "follower_id"
+                  type: UUID
+                  nullable: false
+                  relation:
+                    Relation:
+                      targetTable: "users"
+                      targetColumn: "id"
+                      type: MANY_TO_ONE
+                      onDelete: CASCADE
+              - Column:
+                  name: "following_id"
+                  type: UUID
+                  nullable: false
+                  relation:
+                    Relation:
+                      targetTable: "users"
+                      targetColumn: "id"
+                      type: MANY_TO_ONE
+                      onDelete: CASCADE
+              - Column:
+                  name: "created_at"
+                  type: DATETIME
+                  nullable: false
+        - Table:
+            name: "posts"
+            columns:
+              - Column:
+                  name: "id"
+                  type: UUID
+                  primary: true
+                  nullable: false
+              - Column:
+                  name: "content"
+                  type: TEXT
+                  nullable: false
+              - Column:
+                  name: "image_url"
+                  type: STRING
+                  length: 255
+              - Column:
+                  name: "like_count"
+                  type: INTEGER
+              - Column:
+                  name: "comment_count"
+                  type: INTEGER
+              - Column:
+                  name: "user_id"
+                  type: UUID
+                  nullable: false
+                  relation:
+                    Relation:
+                      targetTable: "users"
+                      targetColumn: "id"
+                      type: MANY_TO_ONE
+                      onDelete: CASCADE
+              - Column:
+                  name: "created_at"
+                  type: DATETIME
+                  nullable: false
+              - Column:
+                  name: "updated_at"
+                  type: DATETIME
+        - Table:
+            name: "comments"
+            columns:
+              - Column:
+                  name: "id"
+                  type: UUID
+                  primary: true
+                  nullable: false
+              - Column:
+                  name: "content"
+                  type: TEXT
+                  nullable: false
+              - Column:
+                  name: "parent_comment_id"
+                  type: UUID
+                  relation:
+                    Relation:
+                      targetTable: "comments"
+                      targetColumn: "id"
+                      type: MANY_TO_ONE
+                      onDelete: CASCADE
+              - Column:
+                  name: "user_id"
+                  type: UUID
+                  nullable: false
+                  relation:
+                    Relation:
+                      targetTable: "users"
+                      targetColumn: "id"
+                      type: MANY_TO_ONE
+                      onDelete: CASCADE
+              - Column:
+                  name: "post_id"
+                  type: UUID
+                  nullable: false
+                  relation:
+                    Relation:
+                      targetTable: "posts"
+                      targetColumn: "id"
+                      type: MANY_TO_ONE
+                      onDelete: CASCADE
+              - Column:
+                  name: "created_at"
+                  type: DATETIME
+                  nullable: false
+              - Column:
+                  name: "updated_at"
+                  type: DATETIME
+        - Table:
+            name: "likes"
+            columns:
+              - Column:
+                  name: "id"
+                  type: UUID
+                  primary: true
+                  nullable: false
+              - Column:
+                  name: "user_id"
+                  type: UUID
+                  nullable: false
+                  relation:
+                    Relation:
+                      targetTable: "users"
+                      targetColumn: "id"
+                      type: MANY_TO_ONE
+                      onDelete: CASCADE
+              - Column:
+                  name: "post_id"
+                  type: UUID
+                  nullable: false
+                  relation:
+                    Relation:
+                      targetTable: "posts"
+                      targetColumn: "id"
+                      type: MANY_TO_ONE
+                      onDelete: CASCADE
+              - Column:
+                  name: "created_at"
+                  type: DATETIME
+                  nullable: false
+        - Table:
+            name: "hashtags"
+            columns:
+              - Column:
+                  name: "id"
+                  type: UUID
+                  primary: true
+                  nullable: false
+              - Column:
+                  name: "tag"
+                  type: STRING
+                  length: 50
+                  unique: true
+                  nullable: false
+              - Column:
+                  name: "use_count"
+                  type: INTEGER
+              - Column:
+                  name: "created_at"
+                  type: DATETIME
+                  nullable: false
+        - Table:
+            name: "post_hashtags"
+            columns:
+              - Column:
+                  name: "id"
+                  type: UUID
+                  primary: true
+                  nullable: false
+              - Column:
+                  name: "post_id"
+                  type: UUID
+                  nullable: false
+                  relation:
+                    Relation:
+                      targetTable: "posts"
+                      targetColumn: "id"
+                      type: MANY_TO_ONE
+                      onDelete: CASCADE
+              - Column:
+                  name: "hashtag_id"
+                  type: UUID
+                  nullable: false
+                  relation:
+                    Relation:
+                      targetTable: "hashtags"
+                      targetColumn: "id"
+                      type: MANY_TO_ONE
+                      onDelete: CASCADE
+        - Table:
+            name: "direct_messages"
+            columns:
+              - Column:
+                  name: "id"
+                  type: UUID
+                  primary: true
+                  nullable: false
+              - Column:
+                  name: "sender_id"
+                  type: UUID
+                  nullable: false
+                  relation:
+                    Relation:
+                      targetTable: "users"
+                      targetColumn: "id"
+                      type: MANY_TO_ONE
+                      onDelete: CASCADE
+              - Column:
+                  name: "recipient_id"
+                  type: UUID
+                  nullable: false
+                  relation:
+                    Relation:
+                      targetTable: "users"
+                      targetColumn: "id"
+                      type: MANY_TO_ONE
+                      onDelete: CASCADE
+              - Column:
+                  name: "content"
+                  type: TEXT
+                  nullable: false
+              - Column:
+                  name: "is_read"
+                  type: BOOLEAN
+              - Column:
+                  name: "created_at"
+                  type: DATETIME
+                  nullable: false
+        - Table:
+            name: "notifications"
+            columns:
+              - Column:
+                  name: "id"
+                  type: UUID
+                  primary: true
+                  nullable: false
+              - Column:
+                  name: "user_id"
+                  type: UUID
+                  nullable: false
+                  relation:
+                    Relation:
+                      targetTable: "users"
+                      targetColumn: "id"
+                      type: MANY_TO_ONE
+                      onDelete: CASCADE
+              - Column:
+                  name: "message"
+                  type: STRING
+                  length: 255
+                  nullable: false
+              - Column:
+                  name: "is_read"
+                  type: BOOLEAN
+              - Column:
+                  name: "created_at"
+                  type: DATETIME
+                  nullable: false
+  api:
+    Api:
+      basePath: "/api/v1"
+      routes:
+        - Route:
+            entity: "users"
+            methods:
+              - CREATE
+              - READ
+              - UPDATE
+              - DELETE
+              - LIST
+        - Route:
+            entity: "posts"
+            methods:
+              - CREATE
+              - READ
+              - UPDATE
+              - DELETE
+              - LIST
+        - Route:
+            entity: "comments"
+            methods:
+              - CREATE
+              - READ
+              - UPDATE
+              - DELETE
+              - LIST
+        - Route:
+            entity: "likes"
+            methods:
+              - CREATE
+              - DELETE
+              - LIST
+        - Route:
+            entity: "direct_messages"
+            methods:
+              - CREATE
+              - READ
+              - DELETE
+              - LIST
+        - Route:
+            entity: "notifications"
+            methods:
+              - READ
+              - UPDATE
+              - LIST
