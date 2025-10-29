@@ -22,12 +22,13 @@ phases:
         # Create output directory
         mkdir -p dependency-check-report
         
-        # Run CVE scan on entire project
+        # Run CVE scan on entire project with NVD API key for faster updates
         ./dependency-check/bin/dependency-check.sh \
           --scan . \
           --format JSON \
           --format HTML \
           --out dependency-check-report \
+          --nvdApiKey 6f22ef7f-7b48-4408-8fbe-fd3144191845 \
           --failOnCVSS 10 \
           --enableExperimental || echo "Dependency check completed with warnings"
         
