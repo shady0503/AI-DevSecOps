@@ -39,7 +39,26 @@ resource "aws_codepipeline" "main" {
     }
   }
 
-  # Stage 2: Build and Test
+  # Stage 2: Secrets Scanning (Gitleaks)
+  stage {
+    name = "SecretsScanning"
+
+    action {
+      name             = "Gitleaks"
+      category         = "Build"
+      owner            = "AWS"
+      provider         = "CodeBuild"
+      version          = "1"
+      input_artifacts  = ["source_output"]
+      output_artifacts = ["gitleaks_output"]
+
+      configuration = {
+        ProjectName = aws_codebuild_project.gitleaks.name
+      }
+    }
+  }
+
+  # Stage 3: Build and Test
   stage {
     name = "Build"
 
@@ -58,12 +77,12 @@ resource "aws_codepipeline" "main" {
     }
   }
 
-  # Stage 3: SAST
+  # Stage 4: SAST (Semgrep)
   stage {
     name = "SAST"
 
     action {
-      name             = "StaticAnalysis"
+      name             = "Semgrep"
       category         = "Build"
       owner            = "AWS"
       provider         = "CodeBuild"
@@ -77,12 +96,31 @@ resource "aws_codepipeline" "main" {
     }
   }
 
-  # Stage 4: Container Analysis
+  # Stage 5: SonarQube Analysis
+  stage {
+    name = "SonarQube"
+
+    action {
+      name             = "CodeQuality"
+      category         = "Build"
+      owner            = "AWS"
+      provider         = "CodeBuild"
+      version          = "1"
+      input_artifacts  = ["source_output"]
+      output_artifacts = ["sonar_output"]
+
+      configuration = {
+        ProjectName = aws_codebuild_project.sonarqube.name
+      }
+    }
+  }
+
+  # Stage 6: Container Analysis (Trivy)
   stage {
     name = "ContainerScan"
 
     action {
-      name             = "ContainerSecurity"
+      name             = "Trivy"
       category         = "Build"
       owner            = "AWS"
       provider         = "CodeBuild"
@@ -96,7 +134,26 @@ resource "aws_codepipeline" "main" {
     }
   }
 
-  # Stage 5: Deploy to Staging
+  # Stage 7: IaC Security (Checkov)
+  stage {
+    name = "IaCScanning"
+
+    action {
+      name             = "Checkov"
+      category         = "Build"
+      owner            = "AWS"
+      provider         = "CodeBuild"
+      version          = "1"
+      input_artifacts  = ["source_output"]
+      output_artifacts = ["checkov_output"]
+
+      configuration = {
+        ProjectName = aws_codebuild_project.checkov.name
+      }
+    }
+  }
+
+  # Stage 8: Deploy to Staging
   stage {
     name = "DeployStaging"
 
@@ -116,12 +173,12 @@ resource "aws_codepipeline" "main" {
     }
   }
 
-  # Stage 6: DAST
+  # Stage 9: DAST (Enhanced ZAP)
   stage {
     name = "DAST"
 
     action {
-      name             = "DynamicAnalysis"
+      name             = "OWASP-ZAP"
       category         = "Build"
       owner            = "AWS"
       provider         = "CodeBuild"
@@ -135,7 +192,7 @@ resource "aws_codepipeline" "main" {
     }
   }
 
-  # Stage 7: Manual Approval
+  # Stage 10: Manual Approval
   stage {
     name = "ManualApproval"
 
@@ -148,12 +205,12 @@ resource "aws_codepipeline" "main" {
 
       configuration = {
         NotificationArn = aws_sns_topic.pipeline_approvals.arn
-        CustomData      = "Please review the test results and approve deployment to production"
+        CustomData      = "Please review all security scan results and approve deployment to production"
       }
     }
   }
 
-  # Stage 8: Deploy to Production
+  # Stage 11: Deploy to Production
   stage {
     name = "DeployProduction"
 

@@ -49,6 +49,13 @@ resource "aws_iam_role_policy" "codepipeline" {
           "iam:PassRole"
         ]
         Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "sns:Publish"
+        ]
+        Resource = "*"
       }
     ]
   })
@@ -123,6 +130,22 @@ resource "aws_iam_role_policy" "codebuild" {
           "codebuild:BatchPutTestCases"
         ]
         Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ecs:UpdateService",
+          "ecs:DescribeServices"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters"
+        ]
+        Resource = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/sonarqube/*"
       }
     ]
   })

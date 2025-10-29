@@ -1,0 +1,70 @@
+version: 0.2
+
+# SonarQube will automatically detect:
+# - Hardcoded credentials (postgres/postgres)
+# - Missing authentication (@PreAuthorize, Spring Security)
+# - Wildcard CORS (@CrossOrigin(origins = "*"))
+# - Missing input validation (@Valid, @NotNull)
+# - SQL injection risks
+# - Security hotspots
+# - Code smells and technical debt
+# - Outdated dependencies with CVEs
+
+phases:
+  pre_build:
+    commands:
+      - echo Installing SonarScanner...
+      - apt-get update
+      - apt-get install -y wget unzip openjdk-17-jdk
+      - wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
+      - unzip sonar-scanner-cli-5.0.1.3006-linux.zip
+      - export PATH=$PATH:$PWD/sonar-scanner-5.0.1.3006-linux/bin
+      
+  build:
+    commands:
+      - echo Running SonarQube analysis on `date`
+      - echo Building project first...
+      - mvn clean verify sonar:sonar
+        -Dsonar.projectKey=social-media-api
+        -Dsonar.projectName=SocialMediaAPI
+        -Dsonar.host.url=${SONAR_HOST_URL}
+        -Dsonar.token=${SONAR_TOKEN}
+        -Dsonar.qualitygate.wait=true
+        -Dsonar.qualitygate.timeout=300
+      
+      # Alternative: Use SonarScanner directly (without Maven plugin)
+      # - |
+      #   sonar-scanner \
+      #     -Dsonar.projectKey=social-media-api \
+      #     -Dsonar.sources=src/main \
+      #     -Dsonar.tests=src/test \
+      #     -Dsonar.java.binaries=target/classes \
+      #     -Dsonar.host.url=${SONAR_HOST_URL} \
+      #     -Dsonar.token=${SONAR_TOKEN} \
+      #     -Dsonar.qualitygate.wait=true
+      
+  post_build:
+    commands:
+      - echo SonarQube analysis completed on `date`
+      - echo Quality Gate status will determine build success/failure
+      - |
+        # Download analysis results
+        curl -u ${SONAR_TOKEN}: \
+          "${SONAR_HOST_URL}/api/issues/search?componentKeys=social-media-api&severities=BLOCKER,CRITICAL,MAJOR" \
+          -o sonarqube-issues.json || true
+      
+      - |
+        curl -u ${SONAR_TOKEN}: \
+          "${SONAR_HOST_URL}/api/qualitygates/project_status?projectKey=social-media-api" \
+          -o sonarqube-quality-gate.json || true
+      
+      - echo Uploading SonarQube reports to S3...
+      - aws s3 cp sonarqube-issues.json s3://$REPORTS_BUCKET/sonarqube-reports/$CODEBUILD_BUILD_NUMBER/issues.json --region eu-west-3 || true
+      - aws s3 cp sonarqube-quality-gate.json s3://$REPORTS_BUCKET/sonarqube-reports/$CODEBUILD_BUILD_NUMBER/quality-gate.json --region eu-west-3 || true
+
+artifacts:
+  files:
+    - sonarqube-issues.json
+    - sonarqube-quality-gate.json
+
+# NOTE: Build will FAIL if Quality Gate fails (vulnerabilities found, security rating < A, etc.)

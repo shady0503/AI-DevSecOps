@@ -8,14 +8,76 @@ phases:
       - apt-get install -y wget default-jdk
       - wget https://github.com/zaproxy/zaproxy/releases/download/v2.16.1/ZAP_2.16.1_Linux.tar.gz
       - tar -xvf ZAP_2.16.1_Linux.tar.gz
+      - echo Scaling up staging environment for DAST testing...
+      - aws ecs update-service --cluster social-media-api-staging --service social-media-api-staging-service --desired-count 1 --region eu-west-3
+      - echo Waiting for staging to be ready...
+      - sleep 60
       
   build:
     commands:
-      - echo Running DAST scan on `date`
+      - echo Running FULL DAST scan on `date`
       - echo Target URL is $STAGING_URL
       - cd ZAP_2.16.1
-      - ./zap.sh -cmd -quickurl $STAGING_URL -quickout ../zap-report.html -quickprogress || true
-      - ./zap.sh -cmd -quickurl $STAGING_URL -quickout ../zap-report.json -quickprogress -quickjson || true
+      
+      # Full automated scan (spider + active scan) instead of quickscan
+      # This will take 15-30 minutes but finds MUCH more
+      - echo Starting comprehensive ZAP scan...
+      - |
+        ./zap.sh -cmd \
+          -host 0.0.0.0 -port 8090 -daemon \
+          -config api.disablekey=true \
+          -config spider.maxDuration=10 \
+          -config scanner.maxRuleDurationInMins=10 &
+        
+        ZAP_PID=$!
+        echo "ZAP daemon started with PID $ZAP_PID"
+        sleep 30
+      
+      # Spider the application (discover all endpoints)
+      - |
+        echo "Spidering application..."
+        curl "http://localhost:8090/JSON/spider/action/scan/?url=$STAGING_URL&maxChildren=10" || true
+        sleep 10
+        
+        # Wait for spider to complete
+        while [ $(curl -s "http://localhost:8090/JSON/spider/view/status/" | grep -o '"status":"[0-9]*"' | grep -o '[0-9]*') -lt 100 ]; do
+          echo "Spider progress: $(curl -s "http://localhost:8090/JSON/spider/view/status/" | grep -o '[0-9]*')%"
+          sleep 5
+        done
+        echo "Spider completed!"
+      
+      # Active scan for vulnerabilities
+      - |
+        echo "Running active security scan..."
+        curl "http://localhost:8090/JSON/ascan/action/scan/?url=$STAGING_URL&recurse=true&inScopeOnly=false" || true
+        sleep 10
+        
+        # Wait for active scan to complete
+        while [ $(curl -s "http://localhost:8090/JSON/ascan/view/status/" | grep -o '"status":"[0-9]*"' | grep -o '[0-9]*') -lt 100 ]; do
+          PROGRESS=$(curl -s "http://localhost:8090/JSON/ascan/view/status/" | grep -o '[0-9]*')
+          echo "Active scan progress: $PROGRESS%"
+          sleep 10
+        done
+        echo "Active scan completed!"
+      
+      # Generate reports
+      - |
+        echo "Generating reports..."
+        curl "http://localhost:8090/OTHER/core/other/htmlreport/" -o ../zap-report.html || true
+        curl "http://localhost:8090/JSON/core/view/alerts/" -o ../zap-report.json || true
+        
+        # Get alerts summary
+        ALERTS=$(curl -s "http://localhost:8090/JSON/core/view/numberOfAlerts/" | grep -o '[0-9]*' || echo "0")
+        echo "Total alerts found: $ALERTS"
+        
+        # Fail if critical/high vulnerabilities found
+        HIGH_ALERTS=$(curl -s "http://localhost:8090/JSON/core/view/alertsSummary/" | grep -o '"High":[0-9]*' | grep -o '[0-9]*' || echo "0")
+        if [ "$HIGH_ALERTS" -gt 0 ]; then
+          echo "ERROR: Found $HIGH_ALERTS high-severity vulnerabilities!"
+          exit 1
+        fi
+      
+      - cd ..
       
   post_build:
     commands:
@@ -24,6 +86,8 @@ phases:
       - cd ..
       - aws s3 cp zap-report.html s3://$REPORTS_BUCKET/dast-reports/$CODEBUILD_BUILD_NUMBER/zap-report.html --region eu-west-3
       - aws s3 cp zap-report.json s3://$REPORTS_BUCKET/dast-reports/$CODEBUILD_BUILD_NUMBER/zap-report.json --region eu-west-3 || true
+      - echo Scaling down staging environment to save costs...
+      - aws ecs update-service --cluster social-media-api-staging --service social-media-api-staging-service --desired-count 0 --region eu-west-3
 
 artifacts:
   files:

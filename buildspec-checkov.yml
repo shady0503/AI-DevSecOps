@@ -1,0 +1,70 @@
+version: 0.2
+
+# Checkov will automatically detect in your Terraform:
+# - publicly_accessible = true on RDS (CKV_AWS_17)
+# - Missing encryption on RDS (CKV_AWS_16)
+# - Security groups with 0.0.0.0/0 ingress (CKV_AWS_260)
+# - Missing backup retention (CKV_AWS_133)
+# - Unencrypted S3 buckets (CKV_AWS_19)
+# - 750+ security checks for AWS/Azure/GCP
+
+phases:
+  install:
+    commands:
+      - echo Installing Checkov for Infrastructure-as-Code scanning...
+      - pip3 install checkov
+      
+  build:
+    commands:
+      - echo Running Checkov IaC security scan on `date`
+      - echo Scanning Terraform files for security misconfigurations...
+      
+      # Scan Terraform with detailed output
+      - |
+        checkov -d terraform/ \
+          --framework terraform \
+          --output json \
+          --output-file-path . \
+          --soft-fail || true
+      
+      # Generate summary and check for failures
+      - |
+        if [ -f results_json.json ]; then
+          FAILED_CHECKS=$(cat results_json.json | grep -o '"result": "failed"' | wc -l)
+          PASSED_CHECKS=$(cat results_json.json | grep -o '"result": "passed"' | wc -l)
+          
+          echo "Checkov Results:"
+          echo "  Passed: $PASSED_CHECKS"
+          echo "  Failed: $FAILED_CHECKS"
+          
+          cat > checkov-summary.json << EOF
+        {
+          "scan_date": "$(date -Iseconds)",
+          "passed_checks": $PASSED_CHECKS,
+          "failed_checks": $FAILED_CHECKS,
+          "status": "$([ $FAILED_CHECKS -gt 0 ] && echo 'FAILED' || echo 'PASSED')",
+          "severity": "$([ $FAILED_CHECKS -gt 5 ] && echo 'CRITICAL' || echo 'MEDIUM')"
+        }
+        EOF
+          
+          mv results_json.json checkov-report.json
+          
+          # Fail build if critical issues found (>5 failures)
+          if [ $FAILED_CHECKS -gt 5 ]; then
+            echo "ERROR: Too many security issues in Terraform! Build failed."
+            cat checkov-report.json
+            exit 1
+          fi
+        fi
+      
+  post_build:
+    commands:
+      - echo Checkov scan completed on `date`
+      - echo Uploading IaC security reports to S3...
+      - aws s3 cp checkov-report.json s3://$REPORTS_BUCKET/iac-reports/$CODEBUILD_BUILD_NUMBER/checkov-report.json --region eu-west-3 || true
+      - aws s3 cp checkov-summary.json s3://$REPORTS_BUCKET/iac-reports/$CODEBUILD_BUILD_NUMBER/checkov-summary.json --region eu-west-3 || true
+
+artifacts:
+  files:
+    - checkov-report.json
+    - checkov-summary.json
