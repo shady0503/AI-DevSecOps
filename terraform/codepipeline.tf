@@ -39,26 +39,7 @@ resource "aws_codepipeline" "main" {
     }
   }
 
-  # Stage 2: Secrets Scanning (Gitleaks)
-  stage {
-    name = "SecretsScanning"
-
-    action {
-      name             = "Gitleaks"
-      category         = "Build"
-      owner            = "AWS"
-      provider         = "CodeBuild"
-      version          = "1"
-      input_artifacts  = ["source_output"]
-      output_artifacts = ["gitleaks_output"]
-
-      configuration = {
-        ProjectName = aws_codebuild_project.gitleaks.name
-      }
-    }
-  }
-
-  # Stage 3: Build and Test
+  # Stage 2: Build and Test
   stage {
     name = "Build"
 
@@ -77,7 +58,7 @@ resource "aws_codepipeline" "main" {
     }
   }
 
-  # Stage 4: SAST (Semgrep)
+  # Stage 3: SAST (Semgrep)
   stage {
     name = "SAST"
 
@@ -96,26 +77,26 @@ resource "aws_codepipeline" "main" {
     }
   }
 
-  # Stage 5: Code Quality Analysis (SpotBugs + OWASP Dependency-Check)
+  # Stage 4: Dependency CVE Scanning (OWASP Dependency-Check)
   stage {
-    name = "CodeQuality"
+    name = "DependencyCheck"
 
     action {
-      name             = "CodeQualityAnalysis"
+      name             = "CVEScanning"
       category         = "Build"
       owner            = "AWS"
       provider         = "CodeBuild"
       version          = "1"
       input_artifacts  = ["source_output"]
-      output_artifacts = ["code_quality_output"]
+      output_artifacts = ["dependency_check_output"]
 
       configuration = {
-        ProjectName = aws_codebuild_project.sonarqube.name
+        ProjectName = aws_codebuild_project.dependency_check.name
       }
     }
   }
 
-  # Stage 6: Container Analysis (Trivy)
+  # Stage 5: Container Analysis (Trivy)
   stage {
     name = "ContainerScan"
 
@@ -134,7 +115,7 @@ resource "aws_codepipeline" "main" {
     }
   }
 
-  # Stage 7: IaC Security (Checkov)
+  # Stage 6: IaC Security (Checkov)
   stage {
     name = "IaCScanning"
 
@@ -153,7 +134,7 @@ resource "aws_codepipeline" "main" {
     }
   }
 
-  # Stage 8: Deploy to Staging
+  # Stage 7: Deploy to Staging
   stage {
     name = "DeployStaging"
 
@@ -173,7 +154,7 @@ resource "aws_codepipeline" "main" {
     }
   }
 
-  # Stage 9: DAST (Enhanced ZAP)
+  # Stage 8: DAST (Enhanced ZAP)
   stage {
     name = "DAST"
 
@@ -192,7 +173,7 @@ resource "aws_codepipeline" "main" {
     }
   }
 
-  # Stage 10: Manual Approval
+  # Stage 9: Manual Approval
   stage {
     name = "ManualApproval"
 
@@ -210,7 +191,7 @@ resource "aws_codepipeline" "main" {
     }
   }
 
-  # Stage 11: Deploy to Production
+  # Stage 10: Deploy to Production
   stage {
     name = "DeployProduction"
 

@@ -10,8 +10,8 @@ phases:
   build:
     commands:
       - echo Running SAST scan on `date`
-      - semgrep --config=auto --json --output=semgrep-report.json src/ || true
-      - semgrep --config=auto --sarif --output=semgrep-report.sarif src/ || true
+      - semgrep --config=auto --json --output=semgrep-report.json . || true
+      - semgrep --config=auto --sarif --output=semgrep-report.sarif . || true
       
   post_build:
     commands:

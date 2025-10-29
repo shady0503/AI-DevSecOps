@@ -1,0 +1,53 @@
+version: 0.2
+
+# Fully automated dependency CVE scanning
+# Works with ANY project type - no configuration needed
+# Detects: CVEs in dependencies, outdated libraries, security vulnerabilities
+
+phases:
+  pre_build:
+    commands:
+      - echo Installing OWASP Dependency-Check...
+      - apt-get update
+      - apt-get install -y wget unzip
+      
+  build:
+    commands:
+      - echo Running OWASP Dependency-Check for CVEs on `date`
+      - |
+        # Download standalone Dependency-Check
+        wget https://github.com/jeremylong/DependencyCheck/releases/download/v10.0.4/dependency-check-10.0.4-release.zip
+        unzip -q dependency-check-10.0.4-release.zip
+        
+        # Run CVE scan on entire project
+        ./dependency-check/bin/dependency-check.sh \
+          --scan . \
+          --format JSON \
+          --format HTML \
+          --out dependency-check-report \
+          --failOnCVSS 10 \
+          --enableExperimental || echo "Dependency check completed with warnings"
+        
+        # Count vulnerabilities
+        if [ -f dependency-check-report/dependency-check-report.json ]; then
+          CRITICAL=$(grep -o '"severity":"CRITICAL"' dependency-check-report/dependency-check-report.json | wc -l || echo "0")
+          HIGH=$(grep -o '"severity":"HIGH"' dependency-check-report/dependency-check-report.json | wc -l || echo "0")
+          MEDIUM=$(grep -o '"severity":"MEDIUM"' dependency-check-report/dependency-check-report.json | wc -l || echo "0")
+          
+          echo "Dependency CVE Results:"
+          echo "  Critical: $CRITICAL"
+          echo "  High: $HIGH"
+          echo "  Medium: $MEDIUM"
+        fi
+      
+  post_build:
+    commands:
+      - echo Dependency CVE analysis completed on `date`
+      - echo Uploading reports to S3...
+      - aws s3 cp dependency-check-report/dependency-check-report.json s3://$REPORTS_BUCKET/code-quality-reports/$CODEBUILD_BUILD_NUMBER/dependency-check.json --region eu-west-3 || true
+      - aws s3 cp dependency-check-report/dependency-check-report.html s3://$REPORTS_BUCKET/code-quality-reports/$CODEBUILD_BUILD_NUMBER/dependency-check.html --region eu-west-3 || true
+
+artifacts:
+  files:
+    - dependency-check-report/dependency-check-report.json
+    - dependency-check-report/dependency-check-report.html

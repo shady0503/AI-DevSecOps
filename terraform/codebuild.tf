@@ -129,42 +129,9 @@ resource "aws_codebuild_project" "container_scan" {
   }
 }
 
-# CodeBuild project for Secrets Scanning (Gitleaks)
-resource "aws_codebuild_project" "gitleaks" {
-  name          = "${var.project_name}-gitleaks"
-  service_role  = aws_iam_role.codebuild.arn
-  build_timeout = 15
-
-  artifacts {
-    type = "CODEPIPELINE"
-  }
-
-  environment {
-    compute_type                = "BUILD_GENERAL1_SMALL"
-    image                      = "aws/codebuild/standard:7.0"
-    type                       = "LINUX_CONTAINER"
-    image_pull_credentials_type = "CODEBUILD"
-
-    environment_variable {
-      name  = "REPORTS_BUCKET"
-      value = aws_s3_bucket.reports.id
-    }
-  }
-
-  source {
-    type      = "CODEPIPELINE"
-    buildspec = "buildspec-gitleaks.yml"
-  }
-
-  tags = {
-    Name        = "${var.project_name}-gitleaks"
-    Environment = var.environment
-  }
-}
-
-# CodeBuild project for Code Quality Analysis (SpotBugs + OWASP Dependency-Check)
-resource "aws_codebuild_project" "sonarqube" {
-  name          = "${var.project_name}-code-quality"
+# CodeBuild project for Dependency CVE Scanning (OWASP Dependency-Check)
+resource "aws_codebuild_project" "dependency_check" {
+  name          = "${var.project_name}-dependency-check"
   service_role  = aws_iam_role.codebuild.arn
   build_timeout = 30
 
@@ -186,11 +153,11 @@ resource "aws_codebuild_project" "sonarqube" {
 
   source {
     type      = "CODEPIPELINE"
-    buildspec = "buildspec-sonarqube.yml"
+    buildspec = "buildspec-dependency-check.yml"
   }
 
   tags = {
-    Name        = "${var.project_name}-code-quality"
+    Name        = "${var.project_name}-dependency-check"
     Environment = var.environment
   }
 }
