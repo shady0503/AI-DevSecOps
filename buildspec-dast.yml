@@ -6,14 +6,14 @@ phases:
       - echo Installing OWASP ZAP for DAST scanning...
       - apt-get update
       - apt-get install -y wget default-jdk
-      - wget https://github.com/zaproxy/zaproxy/releases/download/v2.14.0/ZAP_2.14.0_Linux.tar.gz
-      - tar -xvf ZAP_2.14.0_Linux.tar.gz
+      - wget https://github.com/zaproxy/zaproxy/releases/download/v2.15.0/ZAP_2.15.0_Linux.tar.gz
+      - tar -xvf ZAP_2.15.0_Linux.tar.gz
       
   build:
     commands:
       - echo Running DAST scan on `date`
       - echo Target URL is $STAGING_URL
-      - cd ZAP_2.14.0
+      - cd ZAP_2.15.0
       - ./zap.sh -cmd -quickurl $STAGING_URL -quickout ../zap-report.html -quickprogress || true
       - ./zap.sh -cmd -quickurl $STAGING_URL -quickout ../zap-report.json -quickprogress -quickjson || true
       
