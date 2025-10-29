@@ -139,6 +139,21 @@ resource "aws_iam_role_policy" "codebuild" {
         ]
         Resource = "*"
       }
+      ,
+      {
+        Effect = "Allow"
+        Action = [
+          "ecs:ListTasks",
+          "ecs:DescribeTasks",
+          "ecs:DescribeContainerInstances",
+          "ec2:DescribeNetworkInterfaces",
+          "ec2:DescribeInstances",
+          "elasticloadbalancing:DescribeLoadBalancers",
+          "elasticloadbalancing:DescribeTargetGroups",
+          "elasticloadbalancing:DescribeTargetHealth"
+        ]
+        Resource = "*"
+      }
     ]
   })
 }

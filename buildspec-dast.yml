@@ -4,14 +4,17 @@ phases:
   pre_build:
     commands:
       - echo Installing OWASP ZAP for DAST scanning...
+      - export LANG=en_US.UTF-8
+      - export LC_ALL=en_US.UTF-8
+      - export PYTHONIOENCODING=utf-8
       - apt-get update
       - apt-get install -y wget default-jdk jq
       - wget https://github.com/zaproxy/zaproxy/releases/download/v2.16.1/ZAP_2.16.1_Linux.tar.gz
       - tar -xvf ZAP_2.16.1_Linux.tar.gz
       - echo Scaling up staging environment for DAST testing...
       - aws ecs update-service --cluster social-media-api-staging --service social-media-api-staging-service --desired-count 1 --region eu-west-3
-      - echo Waiting for staging to be ready...
-      - sleep 60
+      - echo Waiting for staging service to stabilize (up to ~5m)...
+      - aws ecs wait services-stable --cluster social-media-api-staging --services social-media-api-staging-service --region eu-west-3 || true
       - echo Discovering staging application endpoint via ECS...
       - |
         # Get running task from ECS service
@@ -23,10 +26,35 @@ phases:
           --query 'taskArns[0]' \
           --output text)
         
-        if [ "$TASK_ARN" = "None" ] || [ -z "$TASK_ARN" ]; then
-          echo "ERROR: No running task found in staging service!"
-          exit 1
-        fi
+        # Retry to wait for running task (up to ~5 minutes) and print debug info
+        RETRIES=30
+        INTERVAL=10
+        COUNT=0
+        while [ -z "$TASK_ARN" ] || [ "$TASK_ARN" = "None" ]; do
+          if [ "$COUNT" -ge "$RETRIES" ]; then
+            echo "ERROR: No running task found in staging service after $((RETRIES*INTERVAL))s"
+            echo "Last raw output of aws ecs list-tasks:"
+            aws ecs list-tasks \
+              --cluster social-media-api-staging \
+              --service-name social-media-api-staging-service \
+              --desired-status RUNNING \
+              --region eu-west-3 \
+              --output json || true
+            exit 1
+          fi
+          echo "No running task yet, retrying in $INTERVAL seconds... ($COUNT/$RETRIES)"
+          sleep $INTERVAL
+          # Print the raw output each attempt to help diagnose timing/permission issues
+          TASKS_RAW=$(aws ecs list-tasks \
+            --cluster social-media-api-staging \
+            --service-name social-media-api-staging-service \
+            --desired-status RUNNING \
+            --region eu-west-3 \
+            --output json) || TASKS_RAW=""
+          echo "list-tasks raw: $TASKS_RAW"
+          TASK_ARN=$(echo "$TASKS_RAW" | jq -r '.taskArns[0] // ""')
+          COUNT=$((COUNT+1))
+        done
         echo "Found running task: $TASK_ARN"
         
         # Get container instance ARN from task
@@ -38,31 +66,65 @@ phases:
           --output text)
         
         echo "Container instance: $CONTAINER_INSTANCE_ARN"
-        
-        # Get EC2 instance ID from container instance
-        EC2_INSTANCE_ID=$(aws ecs describe-container-instances \
-          --cluster social-media-api-staging \
-          --container-instances $CONTAINER_INSTANCE_ARN \
-          --region eu-west-3 \
-          --query 'containerInstances[0].ec2InstanceId' \
-          --output text)
-        
-        echo "EC2 instance: $EC2_INSTANCE_ID"
-        
-        # Get public IP of EC2 instance
-        STAGING_IP=$(aws ec2 describe-instances \
-          --instance-ids $EC2_INSTANCE_ID \
-          --region eu-west-3 \
-          --query 'Reservations[0].Instances[0].PublicIpAddress' \
-          --output text)
-        
+
+        # Determine whether task runs on EC2 (container instance) or Fargate (no containerInstanceArn)
+        if [ -z "$CONTAINER_INSTANCE_ARN" ] || [ "$CONTAINER_INSTANCE_ARN" = "None" ]; then
+          echo "Task appears to be running on Fargate or no container instance attached. Attempting to discover ENI public IP..."
+          ENI_ID=$(aws ecs describe-tasks \
+            --cluster social-media-api-staging \
+            --tasks $TASK_ARN \
+            --region eu-west-3 \
+            --query "tasks[0].attachments[0].details[?name=='networkInterfaceId'].value" \
+            --output text)
+
+          echo "Found ENI: $ENI_ID"
+
+          if [ -z "$ENI_ID" ] || [ "$ENI_ID" = "None" ]; then
+            echo "ERROR: Could not find network interface id for Fargate task. Ensure service is using awsvpc and ENI is available."
+            exit 1
+          fi
+
+          STAGING_IP=$(aws ec2 describe-network-interfaces \
+            --network-interface-ids $ENI_ID \
+            --region eu-west-3 \
+            --query 'NetworkInterfaces[0].Association.PublicIp' \
+            --output text)
+
+          if [ -z "$STAGING_IP" ] || [ "$STAGING_IP" = "None" ]; then
+            echo "No Public IP found on ENI. Trying private IP..."
+            STAGING_IP=$(aws ec2 describe-network-interfaces \
+              --network-interface-ids $ENI_ID \
+              --region eu-west-3 \
+              --query 'NetworkInterfaces[0].PrivateIpAddress' \
+              --output text)
+            echo "Discovered private IP: $STAGING_IP (DAST requires a routable public IP or ALB)"
+          fi
+        else
+          # Get EC2 instance ID from container instance
+          EC2_INSTANCE_ID=$(aws ecs describe-container-instances \
+            --cluster social-media-api-staging \
+            --container-instances $CONTAINER_INSTANCE_ARN \
+            --region eu-west-3 \
+            --query 'containerInstances[0].ec2InstanceId' \
+            --output text)
+
+          echo "EC2 instance: $EC2_INSTANCE_ID"
+
+          # Get public IP of EC2 instance
+          STAGING_IP=$(aws ec2 describe-instances \
+            --instance-ids $EC2_INSTANCE_ID \
+            --region eu-west-3 \
+            --query 'Reservations[0].Instances[0].PublicIpAddress' \
+            --output text)
+        fi
+
         if [ "$STAGING_IP" = "None" ] || [ -z "$STAGING_IP" ]; then
-          echo "ERROR: Could not retrieve public IP for staging instance!"
+          echo "ERROR: Could not retrieve a usable IP address for staging task. Ensure the task has a public IP or expose the app via an ALB."
           exit 1
         fi
-        
+
         export STAGING_URL="http://${STAGING_IP}:8080"
-        echo "✅ Staging application auto-discovered at: $STAGING_URL"
+        echo "Staging application auto-discovered at: $STAGING_URL"
       
   build:
     commands:
