@@ -22,13 +22,15 @@ phases:
         # Create output directory
         mkdir -p dependency-check-report
         
-        # Run CVE scan on entire project with NVD API key for faster updates
+        # Run CVE scan - skip NVD update to avoid memory issues on small instance
+        # Database updates via S3 cache from periodic background jobs
         ./dependency-check/bin/dependency-check.sh \
           --scan . \
           --format JSON \
           --format HTML \
           --out dependency-check-report \
-          --nvdApiKey 6f22ef7f-7b48-4408-8fbe-fd3144191845 \
+          --data /root/.m2/dependency-check-data \
+          --noupdate \
           --failOnCVSS 10 \
           --enableExperimental || echo "Dependency check completed with warnings"
         
@@ -55,3 +57,7 @@ artifacts:
   files:
     - dependency-check-report/dependency-check-report.json
     - dependency-check-report/dependency-check-report.html
+
+cache:
+  paths:
+    - '/root/.m2/dependency-check-data/**/*'

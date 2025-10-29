@@ -8,6 +8,11 @@ resource "aws_codebuild_project" "build" {
     type = "CODEPIPELINE"
   }
 
+  cache {
+    type     = "S3"
+    location = "${aws_s3_bucket.reports.id}/build-cache"
+  }
+
   environment {
     compute_type                = "BUILD_GENERAL1_SMALL"
     image                      = "aws/codebuild/standard:7.0"
@@ -137,6 +142,11 @@ resource "aws_codebuild_project" "dependency_check" {
 
   artifacts {
     type = "CODEPIPELINE"
+  }
+
+  cache {
+    type     = "S3"
+    location = "${aws_s3_bucket.reports.id}/dependency-check-cache"
   }
 
   environment {
