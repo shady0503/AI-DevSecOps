@@ -197,6 +197,13 @@ resource "aws_ecs_service" "staging" {
   desired_count   = 1
   launch_type     = "EC2"
 
+  # Deployment configuration for single EC2 instance with static ports
+  deployment_minimum_healthy_percent = 0    # Allow stopping old task before starting new one
+  deployment_maximum_percent         = 100  # Only run 1 task at a time
+
+  # Force new deployment on each update
+  force_new_deployment = true
+
   depends_on = [
     aws_autoscaling_group.ecs_staging
   ]
@@ -209,6 +216,13 @@ resource "aws_ecs_service" "production" {
   task_definition = aws_ecs_task_definition.app.arn
   desired_count   = 1
   launch_type     = "EC2"
+
+  # Deployment configuration for single EC2 instance with static ports
+  deployment_minimum_healthy_percent = 0    # Allow stopping old task before starting new one
+  deployment_maximum_percent         = 100  # Only run 1 task at a time
+
+  # Force new deployment on each update
+  force_new_deployment = true
 
   depends_on = [
     aws_autoscaling_group.ecs_production

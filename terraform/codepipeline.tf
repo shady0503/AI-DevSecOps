@@ -96,18 +96,18 @@ resource "aws_codepipeline" "main" {
     }
   }
 
-  # Stage 5: SonarQube Analysis
+  # Stage 5: Code Quality Analysis (SpotBugs + OWASP Dependency-Check)
   stage {
-    name = "SonarQube"
+    name = "CodeQuality"
 
     action {
-      name             = "CodeQuality"
+      name             = "CodeQualityAnalysis"
       category         = "Build"
       owner            = "AWS"
       provider         = "CodeBuild"
       version          = "1"
       input_artifacts  = ["source_output"]
-      output_artifacts = ["sonar_output"]
+      output_artifacts = ["code_quality_output"]
 
       configuration = {
         ProjectName = aws_codebuild_project.sonarqube.name

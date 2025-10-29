@@ -5,13 +5,64 @@ phases:
     commands:
       - echo Installing OWASP ZAP for DAST scanning...
       - apt-get update
-      - apt-get install -y wget default-jdk
+      - apt-get install -y wget default-jdk jq
       - wget https://github.com/zaproxy/zaproxy/releases/download/v2.16.1/ZAP_2.16.1_Linux.tar.gz
       - tar -xvf ZAP_2.16.1_Linux.tar.gz
       - echo Scaling up staging environment for DAST testing...
       - aws ecs update-service --cluster social-media-api-staging --service social-media-api-staging-service --desired-count 1 --region eu-west-3
       - echo Waiting for staging to be ready...
       - sleep 60
+      - echo Discovering staging application endpoint via ECS...
+      - |
+        # Get running task from ECS service
+        TASK_ARN=$(aws ecs list-tasks \
+          --cluster social-media-api-staging \
+          --service-name social-media-api-staging-service \
+          --desired-status RUNNING \
+          --region eu-west-3 \
+          --query 'taskArns[0]' \
+          --output text)
+        
+        if [ "$TASK_ARN" = "None" ] || [ -z "$TASK_ARN" ]; then
+          echo "ERROR: No running task found in staging service!"
+          exit 1
+        fi
+        echo "Found running task: $TASK_ARN"
+        
+        # Get container instance ARN from task
+        CONTAINER_INSTANCE_ARN=$(aws ecs describe-tasks \
+          --cluster social-media-api-staging \
+          --tasks $TASK_ARN \
+          --region eu-west-3 \
+          --query 'tasks[0].containerInstanceArn' \
+          --output text)
+        
+        echo "Container instance: $CONTAINER_INSTANCE_ARN"
+        
+        # Get EC2 instance ID from container instance
+        EC2_INSTANCE_ID=$(aws ecs describe-container-instances \
+          --cluster social-media-api-staging \
+          --container-instances $CONTAINER_INSTANCE_ARN \
+          --region eu-west-3 \
+          --query 'containerInstances[0].ec2InstanceId' \
+          --output text)
+        
+        echo "EC2 instance: $EC2_INSTANCE_ID"
+        
+        # Get public IP of EC2 instance
+        STAGING_IP=$(aws ec2 describe-instances \
+          --instance-ids $EC2_INSTANCE_ID \
+          --region eu-west-3 \
+          --query 'Reservations[0].Instances[0].PublicIpAddress' \
+          --output text)
+        
+        if [ "$STAGING_IP" = "None" ] || [ -z "$STAGING_IP" ]; then
+          echo "ERROR: Could not retrieve public IP for staging instance!"
+          exit 1
+        fi
+        
+        export STAGING_URL="http://${STAGING_IP}:8080"
+        echo "✅ Staging application auto-discovered at: $STAGING_URL"
       
   build:
     commands:

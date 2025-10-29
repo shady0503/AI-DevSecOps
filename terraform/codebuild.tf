@@ -162,9 +162,9 @@ resource "aws_codebuild_project" "gitleaks" {
   }
 }
 
-# CodeBuild project for SonarQube Analysis
+# CodeBuild project for Code Quality Analysis (SpotBugs + OWASP Dependency-Check)
 resource "aws_codebuild_project" "sonarqube" {
-  name          = "${var.project_name}-sonarqube"
+  name          = "${var.project_name}-code-quality"
   service_role  = aws_iam_role.codebuild.arn
   build_timeout = 30
 
@@ -182,18 +182,6 @@ resource "aws_codebuild_project" "sonarqube" {
       name  = "REPORTS_BUCKET"
       value = aws_s3_bucket.reports.id
     }
-
-    environment_variable {
-      name  = "SONAR_HOST_URL"
-      type  = "PARAMETER_STORE"
-      value = "/sonarqube/host"
-    }
-
-    environment_variable {
-      name  = "SONAR_TOKEN"
-      type  = "PARAMETER_STORE"
-      value = "/sonarqube/token"
-    }
   }
 
   source {
@@ -202,7 +190,7 @@ resource "aws_codebuild_project" "sonarqube" {
   }
 
   tags = {
-    Name        = "${var.project_name}-sonarqube"
+    Name        = "${var.project_name}-code-quality"
     Environment = var.environment
   }
 }
