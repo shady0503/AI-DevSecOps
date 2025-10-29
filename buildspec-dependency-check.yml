@@ -19,6 +19,9 @@ phases:
         wget https://github.com/jeremylong/DependencyCheck/releases/download/v10.0.4/dependency-check-10.0.4-release.zip
         unzip -q dependency-check-10.0.4-release.zip
         
+        # Create output directory
+        mkdir -p dependency-check-report
+        
         # Run CVE scan on entire project
         ./dependency-check/bin/dependency-check.sh \
           --scan . \
