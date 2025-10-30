@@ -176,9 +176,8 @@ phases:
       # Generate reports
       - |
         echo "Generating reports..."
-        BUILD_DIR=$(echo /codebuild/output/src*)
-        curl "http://localhost:8090/OTHER/core/other/htmlreport/" -o "$BUILD_DIR/zap-report.html" || true
-        curl "http://localhost:8090/JSON/core/view/alerts/" -o "$BUILD_DIR/zap-report.json" || true
+        curl "http://localhost:8090/OTHER/core/other/htmlreport/" -o $CODEBUILD_SRC_DIR/zap-report.html || true
+        curl "http://localhost:8090/JSON/core/view/alerts/" -o $CODEBUILD_SRC_DIR/zap-report.json || true
         # Get alerts summary
         ALERTS=$(curl -s "http://localhost:8090/JSON/core/view/numberOfAlerts/" | grep -o '[0-9]*' || echo "0")
         echo "Total alerts found: $ALERTS"
@@ -195,8 +194,7 @@ phases:
     commands:
       - echo DAST scan completed on `date`
       - echo Uploading DAST reports to S3...
-      - cd /codebuild/output/src*/
-      - aws s3 cp zap-report.html s3://$REPORTS_BUCKET/dast-reports/$CODEBUILD_BUILD_NUMBER/zap-report.html --region eu-west-3
+      - aws s3 cp zap-report.html s3://$REPORTS_BUCKET/dast-reports/$CODEBUILD_BUILD_NUMBER/zap-report.html --region eu-west-3  || true
       - aws s3 cp zap-report.json s3://$REPORTS_BUCKET/dast-reports/$CODEBUILD_BUILD_NUMBER/zap-report.json --region eu-west-3 || true
       - echo Scaling down staging environment to save costs...
       - aws ecs update-service --cluster social-media-api-staging --service social-media-api-staging-service --desired-count 0 --region eu-west-3
