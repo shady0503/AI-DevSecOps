@@ -456,14 +456,19 @@ jobs:
           exit 1
       - name: Fix permissions for ZAP
         run: chmod -R 777 ${{ github.workspace }}
-      - name: Run OWASP ZAP baseline scan
-        uses: zaproxy/action-baseline@v0.12.0
-        with:
-          target: ${{ env.STAGING_URL }}/v3/api-docs
-          rules_file_name: '.zap/rules.tsv'
-          cmd_options: '-a -f openapi'
-          artifact_name: 'zap-reports'
-          fail_action: false
+      - name: Run OWASP ZAP API scan
+        run: |
+          mkdir -p zap-reports
+          docker run -v ${{ github.workspace }}/zap-reports:/zap/wrk:rw \
+            --network host \
+            -t ghcr.io/zaproxy/zaproxy:stable \
+            zap-api-scan.py \
+            -t ${{ env.STAGING_URL }}/v3/api-docs \
+            -f openapi \
+            -J /zap/wrk/report_json.json \
+            -w /zap/wrk/report_md.md \
+            -r /zap/wrk/report_html.html \
+            -a || echo "Scan completed with findings"
       
       - name: Download ZAP reports
         if: always()
