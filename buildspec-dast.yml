@@ -195,7 +195,6 @@ phases:
     commands:
       - echo DAST scan completed on `date`
       - echo Uploading DAST reports to S3...
-      - cd ..
       - aws s3 cp zap-report.html s3://$REPORTS_BUCKET/dast-reports/$CODEBUILD_BUILD_NUMBER/zap-report.html --region eu-west-3
       - aws s3 cp zap-report.json s3://$REPORTS_BUCKET/dast-reports/$CODEBUILD_BUILD_NUMBER/zap-report.json --region eu-west-3 || true
       - echo Scaling down staging environment to save costs...
