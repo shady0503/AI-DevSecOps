@@ -176,8 +176,8 @@ phases:
       # Generate reports
       - |
         echo "Generating reports..."
-        curl "http://localhost:8090/OTHER/core/other/htmlreport/" -o ../zap-report.html || true
-        curl "http://localhost:8090/JSON/core/view/alerts/" -o ../zap-report.json || true
+        curl "http://localhost:8090/OTHER/core/other/htmlreport/" -o /codebuild/output/src*/zap-report.html || true
+        curl "http://localhost:8090/JSON/core/view/alerts/" -o /codebuild/output/src*/zap-report.json || true
         
         # Get alerts summary
         ALERTS=$(curl -s "http://localhost:8090/JSON/core/view/numberOfAlerts/" | grep -o '[0-9]*' || echo "0")
