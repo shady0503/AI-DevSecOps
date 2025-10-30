@@ -469,6 +469,7 @@ jobs:
             -w /zap/wrk/report_md.md \
             -r /zap/wrk/report_html.html \
             -a || echo "Scan completed with findings"
+          chmod -R 777 zap-reports/
       
       - name: Download ZAP reports
         if: always()
