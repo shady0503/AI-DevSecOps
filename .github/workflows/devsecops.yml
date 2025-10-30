@@ -328,7 +328,7 @@ jobs:
               STATUS="CRITICAL"
             fi
             
-            cat > reports/checkov-summary.json << EOF
+            cat > reports/checkov-summary.json <<EOF
             {
               "scan_date": "$(date -Iseconds)",
               "passed": $PASSED,
