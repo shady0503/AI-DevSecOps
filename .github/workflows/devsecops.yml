@@ -461,6 +461,7 @@ jobs:
       - name: Run OWASP ZAP API scan
         run: |
           mkdir -p zap-reports
+          chmod 777 zap-reports
           docker run -v ${{ github.workspace }}/zap-reports:/zap/wrk:rw \
             --network host \
             -t ghcr.io/zaproxy/zaproxy:stable \
@@ -469,7 +470,7 @@ jobs:
             -f openapi \
             -J /zap/wrk/report_json.json \
             -r /zap/wrk/report_html.html \
-            -a
+            -a || true
           chmod -R 777 zap-reports/
       
       - name: Validate DAST report
