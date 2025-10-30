@@ -458,18 +458,18 @@ jobs:
       - name: Fix permissions for ZAP
         run: chmod -R 777 ${{ github.workspace }}
       
-      - name: Run OWASP ZAP baseline scan
+      - name: Run OWASP ZAP API scan
         run: |
           mkdir -p zap-reports
           docker run -v ${{ github.workspace }}/zap-reports:/zap/wrk:rw \
             --network host \
             -t ghcr.io/zaproxy/zaproxy:stable \
-            zap-baseline.py \
+            zap-api-scan.py \
             -t ${{ env.STAGING_URL }}/v3/api-docs \
             -f openapi \
             -J /zap/wrk/report_json.json \
             -r /zap/wrk/report_html.html \
-            -a || echo "Scan completed"
+            -a
           chmod -R 777 zap-reports/
       
       - name: Validate DAST report
