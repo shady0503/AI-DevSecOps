@@ -413,6 +413,10 @@ jobs:
   dast-scan:
     runs-on: ubuntu-latest
     needs: deploy-staging
+    permissions:
+      contents: read
+      issues: write
+      security-events: write
     
     steps:
       - name: Checkout code
@@ -450,13 +454,14 @@ jobs:
           done
           echo "ERROR: Application failed to become healthy"
           exit 1
-      
+      - name: Fix permissions for ZAP
+        run: chmod -R 777 ${{ github.workspace }}
       - name: Run OWASP ZAP baseline scan
         uses: zaproxy/action-baseline@v0.12.0
         with:
           target: ${{ env.STAGING_URL }}
           rules_file_name: '.zap/rules.tsv'
-          cmd_options: '-a -j'
+          cmd_options: '-a -j -O ${{ env.STAGING_URL }}/v3/api-docs'
           artifact_name: 'zap-reports'
           fail_action: false
       
@@ -521,7 +526,7 @@ jobs:
       - name: Get production endpoint
         run: |
           PROD_IP=$(aws ec2 describe-instances \
-            --filters "Name=tag:Name,Values=social-media-api-production-ecs-instance" \
+            --filters "Name=tag:Name,Values=social-media-api-production-ecs" \
                       "Name=instance-state-name,Values=running" \
             --query 'Reservations[0].Instances[0].PublicIpAddress' \
             --output text \
@@ -532,7 +537,7 @@ jobs:
       - name: Verify production health
         run: |
           PROD_IP=$(aws ec2 describe-instances \
-            --filters "Name=tag:Name,Values=social-media-api-production-ecs-instance" \
+            --filters "Name=tag:Name,Values=social-media-api-production-ecs" \
                       "Name=instance-state-name,Values=running" \
             --query 'Reservations[0].Instances[0].PublicIpAddress' \
             --output text \
