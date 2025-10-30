@@ -30,7 +30,7 @@ phases:
         RETRIES=30
         INTERVAL=10
         COUNT=0
-        while [ -z "$TASK_ARN" ] || [ "$TASK_ARN" = "None" ]; do
+        while [ -z "$TASK_ARN" ] || [ "$TASK_ARN" = "None" ] 2>/dev/null; do
           if [ "$COUNT" -ge "$RETRIES" ]; then
             echo "ERROR: No running task found in staging service after $((RETRIES*INTERVAL))s"
             echo "Last raw output of aws ecs list-tasks:"
@@ -136,7 +136,7 @@ phases:
       # This will take 15-30 minutes but finds MUCH more
       - echo Starting comprehensive ZAP scan...
       - |
-        ./zap.sh -cmd \
+        ./zap.sh \
           -host 0.0.0.0 -port 8090 -daemon \
           -config api.disablekey=true \
           -config spider.maxDuration=10 \
@@ -153,7 +153,7 @@ phases:
         sleep 10
         
         # Wait for spider to complete
-        while [ $(curl -s "http://localhost:8090/JSON/spider/view/status/" | grep -o '"status":"[0-9]*"' | grep -o '[0-9]*') -lt 100 ]; do
+        while [ $(curl -s "http://localhost:8090/JSON/spider/view/status/" | grep -o '"status":"[0-9]*"' | grep -o '[0-9]*') -lt 100 ] 2>/dev/null; do
           echo "Spider progress: $(curl -s "http://localhost:8090/JSON/spider/view/status/" | grep -o '[0-9]*')%"
           sleep 5
         done
@@ -166,7 +166,7 @@ phases:
         sleep 10
         
         # Wait for active scan to complete
-        while [ $(curl -s "http://localhost:8090/JSON/ascan/view/status/" | grep -o '"status":"[0-9]*"' | grep -o '[0-9]*') -lt 100 ]; do
+        while [ $(curl -s "http://localhost:8090/JSON/ascan/view/status/" | grep -o '"status":"[0-9]*"' | grep -o '[0-9]*') -lt 100 ] 2>/dev/null; do
           PROGRESS=$(curl -s "http://localhost:8090/JSON/ascan/view/status/" | grep -o '[0-9]*')
           echo "Active scan progress: $PROGRESS%"
           sleep 10
@@ -195,6 +195,7 @@ phases:
     commands:
       - echo DAST scan completed on `date`
       - echo Uploading DAST reports to S3...
+      - cd /codebuild/output/src*/
       - aws s3 cp zap-report.html s3://$REPORTS_BUCKET/dast-reports/$CODEBUILD_BUILD_NUMBER/zap-report.html --region eu-west-3
       - aws s3 cp zap-report.json s3://$REPORTS_BUCKET/dast-reports/$CODEBUILD_BUILD_NUMBER/zap-report.json --region eu-west-3 || true
       - echo Scaling down staging environment to save costs...
