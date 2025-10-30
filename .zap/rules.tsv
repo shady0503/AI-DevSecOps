@@ -1,0 +1,17 @@
+# OWASP ZAP Scan Rules
+# Format: rule_id	IGNORE/WARN/FAIL	(comment)
+
+# Ignore false positives
+10021	IGNORE	X-Content-Type-Options Header Missing - CDN handles this
+10096	IGNORE	Timestamp Disclosure - Not a security risk
+10027	IGNORE	Information Disclosure - Debug endpoints in staging only
+
+# Warn on medium severity
+10038	WARN	Content Security Policy Header Not Set
+10063	WARN	Feature Policy Header Not Set
+
+# Fail on high/critical
+40012	FAIL	Cross Site Scripting (Reflected)
+40014	FAIL	Cross Site Scripting (Persistent)
+40018	FAIL	SQL Injection
+90019	FAIL	Server Side Code Injection
