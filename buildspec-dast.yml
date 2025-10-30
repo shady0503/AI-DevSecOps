@@ -191,14 +191,13 @@ phases:
       
       
   post_build:
-    commands:
+      commands:
       - echo DAST scan completed on `date`
       - echo Uploading DAST reports to S3...
-      - aws s3 cp zap-report.html s3://$REPORTS_BUCKET/dast-reports/$CODEBUILD_BUILD_NUMBER/zap-report.html --region eu-west-3  || true
-      - aws s3 cp zap-report.json s3://$REPORTS_BUCKET/dast-reports/$CODEBUILD_BUILD_NUMBER/zap-report.json --region eu-west-3 || true
+      - aws s3 cp $CODEBUILD_SRC_DIR/zap-report.html s3://$REPORTS_BUCKET/dast-reports/$CODEBUILD_BUILD_NUMBER/zap-report.html --region eu-west-3
+      - aws s3 cp $CODEBUILD_SRC_DIR/zap-report.json s3://$REPORTS_BUCKET/dast-reports/$CODEBUILD_BUILD_NUMBER/zap-report.json --region eu-west-3
       - echo Scaling down staging environment to save costs...
       - aws ecs update-service --cluster social-media-api-staging --service social-media-api-staging-service --desired-count 0 --region eu-west-3
-
 artifacts:
   files:
     - zap-report.html
