@@ -428,12 +428,12 @@ jobs:
       - name: Discover staging endpoint
         run: |
           STAGING_IP=$(aws ec2 describe-instances \
-            --filters "Name=tag:Name,Values=social-media-api-staging-ecs-instance" \
-                      "Name=instance-state-name,Values=running" \
-            --query 'Reservations[0].Instances[0].PublicIpAddress' \
-            --output text \
-            --region ${{ env.AWS_REGION }})
-          
+          --filters "Name=tag:Name,Values=social-media-api-staging-ecs" \
+                    "Name=instance-state-name,Values=running" \
+          --query 'Reservations[0].Instances[0].PublicIpAddress' \
+          --output text \
+          --region eu-west-3)
+
           echo "STAGING_URL=http://${STAGING_IP}:8080" >> $GITHUB_ENV
           echo "Staging URL: http://${STAGING_IP}:8080"
       
