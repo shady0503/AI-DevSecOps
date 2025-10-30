@@ -190,7 +190,6 @@ phases:
           exit 1
         fi
       
-      - cd ..
       
   post_build:
     commands:
