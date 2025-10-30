@@ -14,32 +14,6 @@ data "aws_ami" "ecs_optimized" {
   }
 }
 
-# IAM Role for EC2 instances
-resource "aws_iam_role" "ecs_instance" {
-  name = "${var.project_name}-ecs-instance-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Principal = {
-        Service = "ec2.amazonaws.com"
-      }
-    }]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "ecs_instance" {
-  role       = aws_iam_role.ecs_instance.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
-}
-
-resource "aws_iam_instance_profile" "ecs" {
-  name = "${var.project_name}-ecs-instance-profile"
-  role = aws_iam_role.ecs_instance.name
-}
-
 # Launch Template for Staging
 resource "aws_launch_template" "ecs_staging" {
   name_prefix   = "${var.project_name}-staging-"
