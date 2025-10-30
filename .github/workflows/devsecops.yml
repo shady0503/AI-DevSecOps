@@ -461,7 +461,7 @@ jobs:
         with:
           target: ${{ env.STAGING_URL }}
           rules_file_name: '.zap/rules.tsv'
-          cmd_options: '-a -j -O ${{ env.STAGING_URL }}/v3/api-docs'
+          cmd_options: '-a -j'
           artifact_name: 'zap-reports'
           fail_action: false
       
