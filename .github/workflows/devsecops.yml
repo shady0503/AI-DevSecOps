@@ -87,6 +87,18 @@ jobs:
             semgrep-report.json
             semgrep-report.sarif
           retention-days: 30
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Upload SAST reports to S3
+        run: |
+          aws s3 cp semgrep-report.json s3://social-media-api-reports-${{ secrets.AWS_ACCOUNT_ID }}/sast-reports/${{ github.run_number }}/ --region eu-west-3
+          aws s3 cp semgrep-report.sarif s3://social-media-api-reports-${{ secrets.AWS_ACCOUNT_ID }}/sast-reports/${{ github.run_number }}/ --region eu-west-3
 
   dependency-scan:
     runs-on: ubuntu-latest
@@ -133,7 +145,6 @@ jobs:
           echo "  Medium: $MEDIUM"
           echo "  Low: $LOW"
           
-          # Create summary file
           cat > grype-summary.json << EOF
           {
             "scan_date": "$(date -Iseconds)",
@@ -145,7 +156,6 @@ jobs:
           }
           EOF
           
-          # Fail on critical vulnerabilities
           if [ "$CRITICAL" -gt 0 ]; then
             echo "WARNING: Found $CRITICAL critical vulnerabilities (not blocking build)"
           fi
@@ -160,6 +170,21 @@ jobs:
             grype-report.txt
             grype-summary.json
           retention-days: 30
+      
+      - name: Configure AWS credentials
+        if: always()
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Upload CVE reports to S3
+        if: always()
+        run: |
+          aws s3 cp grype-report.json s3://social-media-api-reports-${{ secrets.AWS_ACCOUNT_ID }}/cve-reports/${{ github.run_number }}/ --region eu-west-3
+          aws s3 cp grype-report.txt s3://social-media-api-reports-${{ secrets.AWS_ACCOUNT_ID }}/cve-reports/${{ github.run_number }}/ --region eu-west-3
+          aws s3 cp grype-summary.json s3://social-media-api-reports-${{ secrets.AWS_ACCOUNT_ID }}/cve-reports/${{ github.run_number }}/ --region eu-west-3
 
   build-docker:
     runs-on: ubuntu-latest
@@ -243,6 +268,20 @@ jobs:
             trivy-report.json
             trivy-report.sarif
           retention-days: 30
+      
+      - name: Configure AWS credentials
+        if: always()
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Upload container scan reports to S3
+        if: always()
+        run: |
+          aws s3 cp trivy-report.json s3://social-media-api-reports-${{ secrets.AWS_ACCOUNT_ID }}/container-scan-reports/${{ github.run_number }}/ --region eu-west-3
+          aws s3 cp trivy-report.sarif s3://social-media-api-reports-${{ secrets.AWS_ACCOUNT_ID }}/container-scan-reports/${{ github.run_number }}/ --region eu-west-3
 
   iac-scan:
     runs-on: ubuntu-latest
@@ -263,7 +302,6 @@ jobs:
             --output-file-path reports \
             --soft-fail || true
           
-          # Checkov creates results_json.json by default
           if [ -f reports/results_json.json ]; then
             mv reports/results_json.json reports/checkov-report.json
           else
@@ -285,13 +323,17 @@ jobs:
             echo "  Passed checks: $PASSED"
             echo "  Failed checks: $FAILED"
             
-            # Create summary
+            STATUS="PASSED"
+            if [ "$FAILED" -gt 5 ]; then
+              STATUS="CRITICAL"
+            fi
+            
             cat > reports/checkov-summary.json << EOF
             {
               "scan_date": "$(date -Iseconds)",
               "passed": $PASSED,
               "failed": $FAILED,
-              "status": "$([ $FAILED -gt 5 ] && echo 'CRITICAL' || echo 'PASSED')"
+              "status": "$STATUS"
             }
             EOF
           fi
@@ -303,6 +345,19 @@ jobs:
           name: iac-scan-reports
           path: reports/
           retention-days: 30
+      
+      - name: Configure AWS credentials
+        if: always()
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Upload IaC scan reports to S3
+        if: always()
+        run: |
+          aws s3 cp reports/ s3://social-media-api-reports-${{ secrets.AWS_ACCOUNT_ID }}/iac-scan-reports/${{ github.run_number }}/ --recursive --region eu-west-3
 
   deploy-staging:
     runs-on: ubuntu-latest
@@ -325,12 +380,10 @@ jobs:
         run: |
           docker load < docker-image.tar.gz
           
-          # Login to ECR
           aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
             docker login --username AWS --password-stdin \
             ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
           
-          # Tag and push
           docker tag ${{ env.ECR_REPOSITORY }}:${{ github.sha }} \
             ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
           
@@ -353,19 +406,6 @@ jobs:
             --cluster ${{ env.ECS_CLUSTER_STAGING }} \
             --services ${{ env.ECS_SERVICE_STAGING }} \
             --region ${{ env.AWS_REGION }}
-      
-      - name: Get staging endpoint
-        id: staging-endpoint
-        run: |
-          STAGING_IP=$(aws ec2 describe-instances \
-            --filters "Name=tag:Name,Values=social-media-api-staging-ecs-instance" \
-                      "Name=instance-state-name,Values=running" \
-            --query 'Reservations[0].Instances[0].PublicIpAddress' \
-            --output text \
-            --region ${{ env.AWS_REGION }})
-          
-          echo "STAGING_URL=http://${STAGING_IP}:8080" >> $GITHUB_OUTPUT
-          echo "Staging endpoint: http://${STAGING_IP}:8080"
 
   dast-scan:
     runs-on: ubuntu-latest
@@ -383,7 +423,6 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
       
       - name: Discover staging endpoint
-        id: discover
         run: |
           STAGING_IP=$(aws ec2 describe-instances \
             --filters "Name=tag:Name,Values=social-media-api-staging-ecs-instance" \
@@ -399,7 +438,7 @@ jobs:
         run: |
           echo "Waiting for application to be healthy..."
           for i in {1..30}; do
-            if curl -sf ${{ env.STAGING_URL }}/actuator/health; then
+            if curl -sf ${STAGING_URL}/actuator/health; then
               echo "✓ Application is healthy!"
               exit 0
             fi
@@ -443,6 +482,11 @@ jobs:
           name: dast-scan-reports
           path: zap-reports/
           retention-days: 30
+      
+      - name: Upload DAST reports to S3
+        if: always()
+        run: |
+          aws s3 cp zap-reports/ s3://social-media-api-reports-${{ secrets.AWS_ACCOUNT_ID }}/dast-reports/${{ github.run_number }}/ --recursive --region eu-west-3
 
   deploy-production:
     runs-on: ubuntu-latest
@@ -519,25 +563,21 @@ jobs:
           echo "**Date:** $(date)" >> summary.md
           echo "" >> summary.md
           
-          # SAST
           if [ -f all-reports/sast-reports/semgrep-report.json ]; then
             SAST_FINDINGS=$(jq '.results | length' all-reports/sast-reports/semgrep-report.json)
             echo "## SAST (Semgrep): $SAST_FINDINGS findings" >> summary.md
           fi
           
-          # CVE
           if [ -f all-reports/cve-reports/grype-summary.json ]; then
             echo "## Dependency CVE Scan:" >> summary.md
             jq -r '"- Critical: \(.critical)\n- High: \(.high)\n- Medium: \(.medium)"' all-reports/cve-reports/grype-summary.json >> summary.md
           fi
           
-          # Container
           if [ -f all-reports/container-scan-reports/trivy-report.json ]; then
             CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' all-reports/container-scan-reports/trivy-report.json)
             echo "## Container Scan: $CRITICAL critical vulnerabilities" >> summary.md
           fi
           
-          # IaC
           if [ -f all-reports/iac-scan-reports/checkov-summary.json ]; then
             echo "## IaC Security:" >> summary.md
             jq -r '"- Passed: \(.passed)\n- Failed: \(.failed)"' all-reports/iac-scan-reports/checkov-summary.json >> summary.md
