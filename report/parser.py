@@ -256,3 +256,8 @@ if __name__ == "__main__":
     )
     parser.run()
     print(len(parser.deduplicated_vulns), "deduplicated vulnerabilities found.")
+
+
+
+# how many policies
+print(len(parser.policy_vulns), "policy violations found.")

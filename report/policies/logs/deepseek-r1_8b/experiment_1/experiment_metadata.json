@@ -1,0 +1,20 @@
+{
+  "model": "deepseek-r1:8b",
+  "experiment": "1",
+  "start_time": "2025-10-31T23:53:44.956934",
+  "timeout_seconds": 300,
+  "total_requests": 1,
+  "successful_requests": 1,
+  "failed_requests": 0,
+  "total_duration_seconds": 25.411811590194702,
+  "request_details": [
+    {
+      "vuln_id": "10021",
+      "duration_seconds": 25.41,
+      "success": true
+    }
+  ],
+  "end_time": "2025-10-31T23:54:12.734461",
+  "completion_rate": 100.0,
+  "avg_latency_seconds": 25.41
+}
