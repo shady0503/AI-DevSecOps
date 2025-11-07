@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 st.set_page_config(page_title="RAG Policy Analysis Dashboard", layout="wide")
 
 # Config
-POLICY_DIR = r"C:\Users\achra\Desktop\test\report\policies"
+POLICY_DIR = os.path.join(os.path.dirname(__file__), "policies")
 
 # Constants
 MODELS = ["llama3.1", "deepseek-r1:8b", "gpt-oss:20b"]
