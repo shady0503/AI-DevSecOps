@@ -13,15 +13,16 @@ POLICY_DIR = os.path.join(os.path.dirname(__file__), "policies")
 
 # Constants
 MODELS = ["llama3.1", "deepseek-r1:8b", "gpt-oss:20b"]
-EXPERIMENTS = ["1", "2"]
+EXPERIMENTS = ["1", "2", "3"]
 
 # Feature names
 FEATURE_NAMES = ['Timeline', 'Responsibilities', 'Procedures', 'Monitoring', 'Compliance', 'Technical Details', 'Risk Assessment']
 FEATURE_KEYS = ['has_timeline', 'has_responsibilities', 'has_procedures', 'has_monitoring', 'has_compliance', 'has_technical_details', 'has_risk_assessment']
 
 # Experiment labels
-EXP1_LABEL = "Experiment 1"
-EXP2_LABEL = "Experiment 2"
+EXP1_LABEL = "Experiment 1: Standardized + RAG"
+EXP2_LABEL = "Experiment 2: Tailored + RAG"
+EXP3_LABEL = "Experiment 3: Standard + RAG (Morocco AI)"
 
 # Metrics for analysis
 CITATION_PATTERNS = {
@@ -109,7 +110,7 @@ def analyze_policy_content(policy_text):
 
 def show_metadata_dashboard():
     """Display metadata dashboard"""
-    st.title("📊 Experiment Metadata Dashboard")
+    st.title("Chart Experiment Metadata Dashboard")
     
     # Load metadata for all models and experiments
     metadata_summary = []
@@ -155,7 +156,7 @@ def show_metadata_dashboard():
     df = pd.DataFrame(metadata_summary)
     
     # Overview metrics
-    st.subheader("📈 Overview Metrics")
+    st.subheader("Overview Metrics")
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
@@ -175,11 +176,11 @@ def show_metadata_dashboard():
         st.metric("Average Latency", f"{avg_latency:.2f}s")
     
     # Detailed table
-    st.subheader("📋 Detailed Experiment Metrics")
+    st.subheader("Detailed Experiment Metrics")
     st.dataframe(df, use_container_width=True)
     
     # Performance comparison charts
-    st.subheader("📊 Performance Comparison")
+    st.subheader("Performance Comparison")
     
     col1, col2 = st.columns(2)
     
@@ -209,7 +210,7 @@ def show_metadata_dashboard():
     
     # RAG Configuration comparison
     if "RAG Top-K" in df.columns:
-        st.subheader("� RAG Configuration")
+        st.subheader("RAG Configuration")
         rag_cols = ["RAG Top-K", "RAG Chunk Size", "RAG Embedder", "RAG Vector Store"]
         existing_rag_cols = [col for col in rag_cols if col in df.columns]
         if existing_rag_cols:
@@ -217,153 +218,167 @@ def show_metadata_dashboard():
 
 def show_policy_comparison():
     """Display policy comparison dashboard"""
-    st.title("�🔒 RAG Policy Comparison Dashboard")
+    st.title("RAG Policy Comparison Dashboard")
     
     # Sidebar
     st.sidebar.header("Filters")
     
     selected_model = st.sidebar.selectbox("Model", MODELS)
+    selected_experiments = st.sidebar.multiselect(
+        "Experiments", 
+        EXPERIMENTS,
+        default=["1", "2", "3"]
+    )
     
-    # Load both experiments
-    exp1 = load_policies(selected_model, "1")
-    exp2 = load_policies(selected_model, "2")
+    if not selected_experiments:
+        st.warning("Please select at least one experiment")
+        return
     
-    if not exp1 and not exp2:
+    # Load experiments
+    policies = {}
+    for exp in selected_experiments:
+        policies[exp] = load_policies(selected_model, exp)
+    
+    # Check if any policies exist
+    if not any(policies.values()):
         st.error("No policies found. Run generator first.")
         return
     
-    # Get CVE list
-    cves = sorted(set(exp1.keys()) | set(exp2.keys()))
-    selected_cve = st.sidebar.selectbox("Vulnerability", sorted(cves))
+    # Get CVE list from all selected experiments
+    all_cves = set()
+    for exp_policies in policies.values():
+        all_cves.update(exp_policies.keys())
+    
+    cves = sorted(all_cves)
+    selected_cve = st.sidebar.selectbox("Vulnerability", cves)
     
     # Display
     st.subheader(f"{selected_model} - {selected_cve}")
     
-    # Analyze policies
-    analysis1 = analyze_policy_content(exp1.get(selected_cve, "")) if selected_cve in exp1 else {}
-    analysis2 = analyze_policy_content(exp2.get(selected_cve, "")) if selected_cve in exp2 else {}
+    # Get experiment labels
+    exp_labels = {
+        "1": EXP1_LABEL,
+        "2": EXP2_LABEL,
+        "3": EXP3_LABEL
+    }
     
-    col1, col2 = st.columns(2)
+    # Create columns based on selected experiments
+    columns = st.columns(len(selected_experiments))
     
-    with col1:
-        st.markdown("### Experiment 1: Standardized + RAG")
-        if selected_cve in exp1:
-            policy1 = exp1[selected_cve]
+    analyses = {}
+    
+    for idx, (exp, col) in enumerate(zip(selected_experiments, columns)):
+        with col:
+            st.markdown(f"### {exp_labels[exp]}")
             
-            # Metrics
-            with st.expander("📊 Policy Metrics", expanded=False):
-                mcol1, mcol2 = st.columns(2)
-                with mcol1:
-                    st.metric("Word Count", analysis1.get('word_count', 0))
-                    st.metric("Sections", analysis1.get('section_count', 0))
-                    st.metric("Total Citations", analysis1.get('total_citations', 0))
-                with mcol2:
-                    st.metric("Paragraphs", analysis1.get('paragraph_count', 0))
-                    st.metric("Completeness Score", f"{analysis1.get('completeness_score', 0)}/7")
-                    
-                # Citation breakdown
-                st.markdown("**Citations by Framework:**")
-                citations1 = analysis1.get('citations', {})
-                for framework, count in citations1.items():
-                    if count > 0:
-                        st.write(f"• {framework}: {count}")
+            if selected_cve in policies[exp]:
+                policy = policies[exp][selected_cve]
+                analysis = analyze_policy_content(policy)
+                analyses[exp] = analysis
                 
-                # Content features
-                st.markdown("**Content Features:**")
-                for feature, name in zip(FEATURE_KEYS, FEATURE_NAMES):
-                    icon = "✅" if analysis1.get(feature, False) else "❌"
-                    st.write(f"{icon} {name}")
-            
-            # Policy content
-            with st.expander("📄 Policy Content", expanded=True):
-                st.markdown(policy1)
-        else:
-            st.warning("No policy generated")
-    
-    with col2:
-        st.markdown("### Experiment 2: Tailored + RAG")
-        if selected_cve in exp2:
-            policy2 = exp2[selected_cve]
-            
-            # Metrics
-            with st.expander("📊 Policy Metrics", expanded=False):
-                mcol1, mcol2 = st.columns(2)
-                with mcol1:
-                    st.metric("Word Count", analysis2.get('word_count', 0))
-                    st.metric("Sections", analysis2.get('section_count', 0))
-                    st.metric("Total Citations", analysis2.get('total_citations', 0))
-                with mcol2:
-                    st.metric("Paragraphs", analysis2.get('paragraph_count', 0))
-                    st.metric("Completeness Score", f"{analysis2.get('completeness_score', 0)}/7")
+                # Metrics
+                with st.expander("Policy Metrics", expanded=False):
+                    mcol1, mcol2 = st.columns(2)
+                    with mcol1:
+                        st.metric("Word Count", analysis.get('word_count', 0))
+                        st.metric("Sections", analysis.get('section_count', 0))
+                        st.metric("Total Citations", analysis.get('total_citations', 0))
+                    with mcol2:
+                        st.metric("Paragraphs", analysis.get('paragraph_count', 0))
+                        st.metric("Completeness Score", f"{analysis.get('completeness_score', 0)}/7")
+                        
+                    # Citation breakdown
+                    st.markdown("**Citations by Framework:**")
+                    citations = analysis.get('citations', {})
+                    for framework, count in citations.items():
+                        if count > 0:
+                            st.write(f"• {framework}: {count}")
                     
-                # Citation breakdown
-                st.markdown("**Citations by Framework:**")
-                citations2 = analysis2.get('citations', {})
-                for framework, count in citations2.items():
-                    if count > 0:
-                        st.write(f"• {framework}: {count}")
+                    # Content features
+                    st.markdown("**Content Features:**")
+                    for feature, name in zip(FEATURE_KEYS, FEATURE_NAMES):
+                        icon = "OK" if analysis.get(feature, False) else "X"
+                        st.write(f"[{icon}] {name}")
                 
-                # Content features
-                st.markdown("**Content Features:**")
-                features = ['has_timeline', 'has_responsibilities', 'has_procedures', 'has_monitoring', 'has_compliance', 'has_technical_details', 'has_risk_assessment']
-                feature_names = ['Timeline', 'Responsibilities', 'Procedures', 'Monitoring', 'Compliance', 'Technical Details', 'Risk Assessment']
-                for feature, name in zip(features, feature_names):
-                    icon = "✅" if analysis2.get(feature, False) else "❌"
-                    st.write(f"{icon} {name}")
-            
-            # Policy content
-            with st.expander("📄 Policy Content", expanded=True):
-                st.markdown(policy2)
-        else:
-            st.warning("No policy generated")
+                # Policy content
+                with st.expander("Policy Content", expanded=True):
+                    st.markdown(policy)
+            else:
+                st.warning("No policy generated")
     
-    # Detailed Comparison
-    if selected_cve in exp1 and selected_cve in exp2:
+    # Detailed Comparison (only if 2+ experiments selected)
+    if len(selected_experiments) >= 2:
         st.markdown("---")
-        st.subheader("📊 Detailed Comparison Analysis")
+        st.subheader("Detailed Comparison Analysis")
         
-        # Metrics comparison
-        col1, col2, col3, col4 = st.columns(4)
+        # Build comparison data
+        comparison_data = []
+        for exp in selected_experiments:
+            if selected_cve in policies[exp]:
+                analysis = analyses.get(exp, analyze_policy_content(policies[exp][selected_cve]))
+                comparison_data.append({
+                    "Experiment": exp_labels[exp],
+                    "Word Count": analysis.get('word_count', 0),
+                    "Citations": analysis.get('total_citations', 0),
+                    "Completeness": analysis.get('completeness_score', 0),
+                    "Sections": analysis.get('section_count', 0),
+                    "Paragraphs": analysis.get('paragraph_count', 0)
+                })
         
-        with col1:
-            word_diff = analysis2.get('word_count', 0) - analysis1.get('word_count', 0)
-            st.metric("Word Count Difference", word_diff, delta=word_diff)
+        if comparison_data:
+            comp_df = pd.DataFrame(comparison_data)
+            st.dataframe(comp_df, use_container_width=True)
             
-        with col2:
-            citation_diff = analysis2.get('total_citations', 0) - analysis1.get('total_citations', 0)
-            st.metric("Citations Difference", citation_diff, delta=citation_diff)
+            # Comparison charts
+            col1, col2 = st.columns(2)
             
-        with col3:
-            completeness_diff = analysis2.get('completeness_score', 0) - analysis1.get('completeness_score', 0)
-            st.metric("Completeness Difference", completeness_diff, delta=completeness_diff)
+            with col1:
+                # Word count comparison
+                fig_words = px.bar(
+                    comp_df,
+                    x="Experiment",
+                    y="Word Count",
+                    title="Word Count Comparison",
+                    color="Experiment"
+                )
+                st.plotly_chart(fig_words, use_container_width=True)
             
-        with col4:
-            section_diff = analysis2.get('section_count', 0) - analysis1.get('section_count', 0)
-            st.metric("Sections Difference", section_diff, delta=section_diff)
+            with col2:
+                # Citations comparison
+                fig_cit = px.bar(
+                    comp_df,
+                    x="Experiment",
+                    y="Citations",
+                    title="Total Citations Comparison",
+                    color="Experiment"
+                )
+                st.plotly_chart(fig_cit, use_container_width=True)
         
-        # Citation comparison chart
-        if analysis1.get('citations') and analysis2.get('citations'):
-            st.markdown("### 📚 Citation Framework Comparison")
+        # Citation framework comparison
+        if len(selected_experiments) >= 2:
+            st.markdown("### Citation Framework Comparison")
             
-            # Prepare data for comparison chart
             frameworks = list(CITATION_PATTERNS.keys())
-            exp1_counts = [analysis1.get('citations', {}).get(fw, 0) for fw in frameworks]
-            exp2_counts = [analysis2.get('citations', {}).get(fw, 0) for fw in frameworks]
+            citation_comparison = []
             
-            citation_df = pd.DataFrame({
-                'Framework': frameworks,
-                'Experiment 1': exp1_counts,
-                'Experiment 2': exp2_counts
-            })
+            for exp in selected_experiments:
+                if selected_cve in policies[exp]:
+                    analysis = analyses.get(exp, analyze_policy_content(policies[exp][selected_cve]))
+                    for framework in frameworks:
+                        count = analysis.get('citations', {}).get(framework, 0)
+                        if count > 0:
+                            citation_comparison.append({
+                                'Framework': framework,
+                                'Experiment': exp_labels[exp],
+                                'Count': count
+                            })
             
-            # Only show frameworks with citations
-            citation_df = citation_df[(citation_df['Experiment 1'] > 0) | (citation_df['Experiment 2'] > 0)]
-            
-            if not citation_df.empty:
+            if citation_comparison:
+                cit_df = pd.DataFrame(citation_comparison)
                 fig_citations = px.bar(
-                    citation_df.melt(id_vars=['Framework'], var_name='Experiment', value_name='Citations'),
+                    cit_df,
                     x='Framework',
-                    y='Citations',
+                    y='Count',
                     color='Experiment',
                     title="Citation Count by Framework",
                     barmode='group'
@@ -371,56 +386,23 @@ def show_policy_comparison():
                 st.plotly_chart(fig_citations, use_container_width=True)
         
         # Content feature comparison
-        st.markdown("### 🎯 Content Features Comparison")
-        
-        features = ['has_timeline', 'has_responsibilities', 'has_procedures', 'has_monitoring', 'has_compliance', 'has_technical_details', 'has_risk_assessment']
-        feature_names = ['Timeline', 'Responsibilities', 'Procedures', 'Monitoring', 'Compliance', 'Technical Details', 'Risk Assessment']
+        st.markdown("### Content Features Comparison")
         
         feature_comparison = []
-        for feature, name in zip(features, feature_names):
-            exp1_has = analysis1.get(feature, False)
-            exp2_has = analysis2.get(feature, False)
-            feature_comparison.append({
-                'Feature': name,
-                'Experiment 1': '✅' if exp1_has else '❌',
-                'Experiment 2': '✅' if exp2_has else '❌',
-                'Both Have': '✅' if exp1_has and exp2_has else '❌',
-                'Neither Have': '✅' if not exp1_has and not exp2_has else '❌'
-            })
+        for feature, name in zip(FEATURE_KEYS, FEATURE_NAMES):
+            row = {'Feature': name}
+            for exp in selected_experiments:
+                if selected_cve in policies[exp]:
+                    analysis = analyses.get(exp, analyze_policy_content(policies[exp][selected_cve]))
+                    row[exp_labels[exp]] = 'YES' if analysis.get(feature, False) else 'NO'
+            feature_comparison.append(row)
         
         feature_df = pd.DataFrame(feature_comparison)
         st.dataframe(feature_df, use_container_width=True)
-        
-        # Quality assessment
-        st.markdown("### 🏆 Quality Assessment")
-        
-        qcol1, qcol2 = st.columns(2)
-        
-        with qcol1:
-            st.markdown("**Experiment 1 Strengths:**")
-            if analysis1.get('completeness_score', 0) > analysis2.get('completeness_score', 0):
-                st.write("• Higher completeness score")
-            if analysis1.get('total_citations', 0) > analysis2.get('total_citations', 0):
-                st.write("• More framework citations")
-            if analysis1.get('word_count', 0) > analysis2.get('word_count', 0):
-                st.write("• More detailed content")
-            if analysis1.get('section_count', 0) > analysis2.get('section_count', 0):
-                st.write("• Better structured")
-                
-        with qcol2:
-            st.markdown("**Experiment 2 Strengths:**")
-            if analysis2.get('completeness_score', 0) > analysis1.get('completeness_score', 0):
-                st.write("• Higher completeness score")
-            if analysis2.get('total_citations', 0) > analysis1.get('total_citations', 0):
-                st.write("• More framework citations")
-            if analysis2.get('word_count', 0) > analysis1.get('word_count', 0):
-                st.write("• More detailed content")
-            if analysis2.get('section_count', 0) > analysis1.get('section_count', 0):
-                st.write("• Better structured")
 
 def show_individual_metadata():
     """Display individual experiment metadata"""
-    st.title("🔍 Individual Experiment Analysis")
+    st.title("Individual Experiment Analysis")
     
     # Sidebar for selection
     st.sidebar.header("Select Experiment")
@@ -457,20 +439,42 @@ def show_individual_metadata():
     
     # RAG Configuration (if available)
     if "rag_config" in data:
-        st.subheader("🔧 RAG Configuration")
+        st.subheader("RAG Configuration")
         rag_config = data["rag_config"]
         
         col1, col2 = st.columns(2)
         with col1:
             st.write(f"**Top-K:** {rag_config.get('top_k', 'N/A')}")
             st.write(f"**Chunk Size:** {rag_config.get('chunk_size', 'N/A')}")
+            st.write(f"**Namespace:** {rag_config.get('namespace', 'N/A')}")
         with col2:
             st.write(f"**Embedder:** {rag_config.get('embedder', 'N/A')}")
             st.write(f"**Vector Store:** {rag_config.get('vector_store', 'N/A')}")
+            st.write(f"**Source:** {rag_config.get('source', 'N/A')}")
+        
+        # Author and vector details
+        if rag_config.get('author_attribution'):
+            st.write(f"**Author:** {rag_config.get('author_attribution', 'N/A')}")
+        if rag_config.get('total_vectors'):
+            st.write(f"**Total Vectors:** {rag_config.get('total_vectors', 'N/A')}")
+        
+        # Source documents section (Experiment 3 specific)
+        if "source_documents" in rag_config:
+            st.write("---")
+            st.write("**Source Documents:**")
+            source_docs = rag_config.get('source_documents', {})
+            for doc_key, doc_info in source_docs.items():
+                with st.expander(f"{doc_info.get('title', 'Unknown')} by {doc_info.get('author', 'Unknown')}"):
+                    st.write(f"**ID:** {doc_info.get('id', 'N/A')}")
+                    st.write(f"**Author:** {doc_info.get('author', 'N/A')}")
+                    st.write(f"**Chunks:** {doc_info.get('chunks', 'N/A')}")
+                    st.write(f"**Focus:** {doc_info.get('focus', 'N/A')}")
+                    if doc_info.get('purpose'):
+                        st.write(f"**Purpose:** {doc_info.get('purpose', 'N/A')}")
     
     # Processing details
     if "policy_ids_processed" in data:
-        st.subheader("📋 Processing Details")
+        st.subheader("Processing Details")
         
         # Convert to DataFrame for better display
         process_data = []
@@ -478,7 +482,7 @@ def show_individual_metadata():
             process_data.append({
                 "Vulnerability ID": item["vuln_id"],
                 "Duration (s)": round(item["duration_seconds"], 2),
-                "Status": "✓ Success" if item["success"] else "✗ Failed"
+                "Status": "Success" if item["success"] else "Failed"
             })
         
         df_process = pd.DataFrame(process_data)
@@ -506,116 +510,106 @@ def show_individual_metadata():
 
 def show_aggregate_analysis():
     """Show aggregate analysis across all policies"""
-    st.title("📈 Aggregate Policy Analysis")
+    st.title("Aggregate Policy Analysis")
     
     selected_model = st.sidebar.selectbox("Model", MODELS, key="aggregate")
+    selected_experiments = st.sidebar.multiselect(
+        "Experiments for Analysis",
+        EXPERIMENTS,
+        default=["1", "2", "3"],
+        key="agg_exp"
+    )
     
-    # Load all policies for both experiments
-    exp1_policies = load_policies(selected_model, "1")
-    exp2_policies = load_policies(selected_model, "2")
-    
-    if not exp1_policies and not exp2_policies:
-        st.error("No policies found for analysis")
+    if not selected_experiments:
+        st.warning("Please select at least one experiment")
         return
     
-    # Analyze all policies
-    exp1_analyses = []
-    exp2_analyses = []
+    # Load all policies for selected experiments
+    all_analyses = {}
     
-    all_cves = set(exp1_policies.keys()) | set(exp2_policies.keys())
-    
-    for cve in all_cves:
-        if cve in exp1_policies:
-            analysis = analyze_policy_content(exp1_policies[cve])
-            analysis['cve'] = cve
-            exp1_analyses.append(analysis)
+    for exp in selected_experiments:
+        policies = load_policies(selected_model, exp)
+        
+        if policies:
+            exp_analyses = []
+            for cve, policy in policies.items():
+                analysis = analyze_policy_content(policy)
+                analysis['cve'] = cve
+                exp_analyses.append(analysis)
             
-        if cve in exp2_policies:
-            analysis = analyze_policy_content(exp2_policies[cve])
-            analysis['cve'] = cve
-            exp2_analyses.append(analysis)
+            all_analyses[exp] = pd.DataFrame(exp_analyses) if exp_analyses else pd.DataFrame()
     
-    # Convert to DataFrames
-    df1 = pd.DataFrame(exp1_analyses) if exp1_analyses else pd.DataFrame()
-    df2 = pd.DataFrame(exp2_analyses) if exp2_analyses else pd.DataFrame()
+    if not all_analyses or all(df.empty for df in all_analyses.values()):
+        st.error("No policies found for selected experiments")
+        return
     
     # Summary statistics
-    st.subheader("📊 Summary Statistics")
+    st.subheader("Summary Statistics")
     
-    col1, col2 = st.columns(2)
+    exp_labels = {
+        "1": EXP1_LABEL,
+        "2": EXP2_LABEL,
+        "3": EXP3_LABEL
+    }
     
-    with col1:
-        st.markdown("### Experiment 1: Standardized + RAG")
-        if not df1.empty:
-            st.metric("Total Policies", len(df1))
-            st.metric("Avg Word Count", f"{df1['word_count'].mean():.0f}")
-            st.metric("Avg Citations", f"{df1['total_citations'].mean():.1f}")
-            st.metric("Avg Completeness", f"{df1['completeness_score'].mean():.1f}/7")
-            
-    with col2:
-        st.markdown("### Experiment 2: Tailored + RAG")
-        if not df2.empty:
-            st.metric("Total Policies", len(df2))
-            st.metric("Avg Word Count", f"{df2['word_count'].mean():.0f}")
-            st.metric("Avg Citations", f"{df2['total_citations'].mean():.1f}")
-            st.metric("Avg Completeness", f"{df2['completeness_score'].mean():.1f}/7")
+    cols = st.columns(len(selected_experiments))
+    
+    for col_idx, (exp, col) in enumerate(zip(selected_experiments, cols)):
+        with col:
+            st.markdown(f"### {exp_labels[exp]}")
+            if exp in all_analyses and not all_analyses[exp].empty:
+                df = all_analyses[exp]
+                st.metric("Total Policies", len(df))
+                st.metric("Avg Word Count", f"{df['word_count'].mean():.0f}")
+                st.metric("Avg Citations", f"{df['total_citations'].mean():.1f}")
+                st.metric("Avg Completeness", f"{df['completeness_score'].mean():.1f}/7")
     
     # Distribution comparisons
-    if not df1.empty and not df2.empty:
-        st.subheader("📊 Distribution Comparisons")
+    if len(selected_experiments) >= 2 and any(not df.empty for df in all_analyses.values()):
+        st.subheader("Distribution Comparisons")
         
         col1, col2 = st.columns(2)
         
         with col1:
             # Word count distribution
             fig_words = go.Figure()
-            fig_words.add_trace(go.Histogram(x=df1['word_count'], name='Experiment 1', opacity=0.7))
-            fig_words.add_trace(go.Histogram(x=df2['word_count'], name='Experiment 2', opacity=0.7))
+            for exp in selected_experiments:
+                if exp in all_analyses and not all_analyses[exp].empty:
+                    fig_words.add_trace(go.Histogram(
+                        x=all_analyses[exp]['word_count'],
+                        name=exp_labels[exp],
+                        opacity=0.7
+                    ))
             fig_words.update_layout(title='Word Count Distribution', barmode='overlay')
             st.plotly_chart(fig_words, use_container_width=True)
             
         with col2:
             # Citation distribution
             fig_citations = go.Figure()
-            fig_citations.add_trace(go.Histogram(x=df1['total_citations'], name='Experiment 1', opacity=0.7))
-            fig_citations.add_trace(go.Histogram(x=df2['total_citations'], name='Experiment 2', opacity=0.7))
+            for exp in selected_experiments:
+                if exp in all_analyses and not all_analyses[exp].empty:
+                    fig_citations.add_trace(go.Histogram(
+                        x=all_analyses[exp]['total_citations'],
+                        name=exp_labels[exp],
+                        opacity=0.7
+                    ))
             fig_citations.update_layout(title='Total Citations Distribution', barmode='overlay')
             st.plotly_chart(fig_citations, use_container_width=True)
         
         # Feature adoption rates
-        st.subheader("🎯 Feature Adoption Rates")
-        
-        features = ['has_timeline', 'has_responsibilities', 'has_procedures', 'has_monitoring', 'has_compliance', 'has_technical_details', 'has_risk_assessment']
-        feature_names = ['Timeline', 'Responsibilities', 'Procedures', 'Monitoring', 'Compliance', 'Technical Details', 'Risk Assessment']
+        st.subheader("Feature Adoption Rates")
         
         adoption_data = []
-        for feature, name in zip(features, feature_names):
-            exp1_rate = (df1[feature].sum() / len(df1)) * 100 if len(df1) > 0 else 0
-            exp2_rate = (df2[feature].sum() / len(df2)) * 100 if len(df2) > 0 else 0
-            adoption_data.append({
-                'Feature': name,
-                'Experiment 1 (%)': exp1_rate,
-                'Experiment 2 (%)': exp2_rate,
-                'Difference': exp2_rate - exp1_rate
-            })
+        for feature, name in zip(FEATURE_KEYS, FEATURE_NAMES):
+            row = {'Feature': name}
+            for exp in selected_experiments:
+                if exp in all_analyses and not all_analyses[exp].empty:
+                    df = all_analyses[exp]
+                    adoption_rate = (df[feature].sum() / len(df)) * 100 if len(df) > 0 else 0
+                    row[exp_labels[exp]] = f"{adoption_rate:.1f}%"
+            adoption_data.append(row)
         
         adoption_df = pd.DataFrame(adoption_data)
-        
-        fig_adoption = px.bar(
-            adoption_df.melt(id_vars=['Feature', 'Difference'], 
-                           value_vars=['Experiment 1 (%)', 'Experiment 2 (%)'],
-                           var_name='Experiment', value_name='Adoption Rate (%)'),
-            x='Feature',
-            y='Adoption Rate (%)',
-            color='Experiment',
-            title='Feature Adoption Rates by Experiment',
-            barmode='group'
-        )
-        fig_adoption.update_layout(xaxis_tickangle=45)
-        st.plotly_chart(fig_adoption, use_container_width=True)
-        
-        # Statistical comparison table
-        st.subheader("📋 Statistical Comparison")
         st.dataframe(adoption_df, use_container_width=True)
 
 def main():

@@ -1,7 +1,7 @@
 {
   "model": "deepseek-r1:8b",
   "experiment": "2",
-  "start_time": "2025-11-01T01:14:03.056263",
+  "start_time": "2025-11-08T02:10:13.223020",
   "timeout_seconds": 600,
   "rag_config": {
     "top_k": 2,
@@ -12,620 +12,620 @@
   "total_vulnerabilities": 122,
   "successful_generations": 122,
   "failed_generations": 0,
-  "total_duration_seconds": 3851.9288527965546,
+  "total_duration_seconds": 9628.833436489105,
   "policy_ids_processed": [
     {
       "vuln_id": "10021",
-      "duration_seconds": 27.98,
+      "duration_seconds": 120.27,
       "success": true
     },
     {
       "vuln_id": "10049",
-      "duration_seconds": 20.64,
+      "duration_seconds": 67.32,
       "success": true
     },
     {
       "vuln_id": "110009",
-      "duration_seconds": 24.72,
+      "duration_seconds": 67.86,
       "success": true
     },
     {
       "vuln_id": "90004",
-      "duration_seconds": 24.32,
+      "duration_seconds": 66.15,
       "success": true
     },
     {
       "vuln_id": "90005",
-      "duration_seconds": 27.05,
+      "duration_seconds": 68.4,
       "success": true
     },
     {
       "vuln_id": "CKV2_AWS_11",
-      "duration_seconds": 38.43,
+      "duration_seconds": 77.23,
       "success": true
     },
     {
       "vuln_id": "CKV2_AWS_12",
-      "duration_seconds": 22.14,
+      "duration_seconds": 79.34,
       "success": true
     },
     {
       "vuln_id": "CKV2_AWS_30",
-      "duration_seconds": 26.85,
+      "duration_seconds": 99.05,
       "success": true
     },
     {
       "vuln_id": "CKV2_AWS_6",
-      "duration_seconds": 37.46,
+      "duration_seconds": 65.58,
       "success": true
     },
     {
       "vuln_id": "CKV2_AWS_60",
-      "duration_seconds": 27.4,
+      "duration_seconds": 88.17,
       "success": true
     },
     {
       "vuln_id": "CKV2_AWS_62",
-      "duration_seconds": 30.58,
+      "duration_seconds": 79.72,
       "success": true
     },
     {
       "vuln_id": "CKV_AWS_118",
-      "duration_seconds": 34.19,
+      "duration_seconds": 73.51,
       "success": true
     },
     {
       "vuln_id": "CKV_AWS_129",
-      "duration_seconds": 28.89,
+      "duration_seconds": 91.52,
       "success": true
     },
     {
       "vuln_id": "CKV_AWS_130",
-      "duration_seconds": 58.14,
+      "duration_seconds": 76.16,
       "success": true
     },
     {
       "vuln_id": "CKV_AWS_136",
-      "duration_seconds": 30.57,
+      "duration_seconds": 75.82,
       "success": true
     },
     {
       "vuln_id": "CKV_AWS_144",
-      "duration_seconds": 21.81,
+      "duration_seconds": 75.69,
       "success": true
     },
     {
       "vuln_id": "CKV_AWS_145",
-      "duration_seconds": 18.22,
+      "duration_seconds": 80.91,
       "success": true
     },
     {
       "vuln_id": "CKV_AWS_157",
-      "duration_seconds": 28.72,
+      "duration_seconds": 62.89,
       "success": true
     },
     {
       "vuln_id": "CKV_AWS_158",
-      "duration_seconds": 37.18,
+      "duration_seconds": 88.82,
       "success": true
     },
     {
       "vuln_id": "CKV_AWS_161",
-      "duration_seconds": 17.92,
+      "duration_seconds": 96.04,
       "success": true
     },
     {
       "vuln_id": "CKV_AWS_18",
-      "duration_seconds": 35.01,
+      "duration_seconds": 68.6,
       "success": true
     },
     {
       "vuln_id": "CKV_AWS_226",
-      "duration_seconds": 23.18,
+      "duration_seconds": 93.63,
       "success": true
     },
     {
       "vuln_id": "CKV_AWS_23",
-      "duration_seconds": 32.03,
+      "duration_seconds": 67.68,
       "success": true
     },
     {
       "vuln_id": "CKV_AWS_24",
-      "duration_seconds": 36.95,
+      "duration_seconds": 94.08,
       "success": true
     },
     {
       "vuln_id": "CKV_AWS_249",
-      "duration_seconds": 35.44,
+      "duration_seconds": 67.51,
       "success": true
     },
     {
       "vuln_id": "CKV_AWS_293",
-      "duration_seconds": 38.52,
+      "duration_seconds": 89.93,
       "success": true
     },
     {
       "vuln_id": "CKV_AWS_300",
-      "duration_seconds": 27.68,
+      "duration_seconds": 68.72,
       "success": true
     },
     {
       "vuln_id": "CKV_AWS_336",
-      "duration_seconds": 29.68,
+      "duration_seconds": 90.04,
       "success": true
     },
     {
       "vuln_id": "CKV_AWS_338",
-      "duration_seconds": 26.86,
+      "duration_seconds": 81.39,
       "success": true
     },
     {
       "vuln_id": "CKV_AWS_353",
-      "duration_seconds": 37.6,
+      "duration_seconds": 110.99,
       "success": true
     },
     {
       "vuln_id": "CKV_AWS_382",
-      "duration_seconds": 31.67,
+      "duration_seconds": 102.07,
       "success": true
     },
     {
       "vuln_id": "CKV_AWS_51",
-      "duration_seconds": 28.96,
+      "duration_seconds": 67.75,
       "success": true
     },
     {
       "vuln_id": "CKV_AWS_65",
-      "duration_seconds": 34.56,
+      "duration_seconds": 74.59,
       "success": true
     },
     {
       "vuln_id": "CKV_AWS_79",
-      "duration_seconds": 29.53,
+      "duration_seconds": 71.47,
       "success": true
     },
     {
       "vuln_id": "CVE-2016-2781",
-      "duration_seconds": 34.13,
+      "duration_seconds": 83.8,
       "success": true
     },
     {
       "vuln_id": "CVE-2021-31879",
-      "duration_seconds": 32.15,
+      "duration_seconds": 83.73,
       "success": true
     },
     {
       "vuln_id": "CVE-2022-3219",
-      "duration_seconds": 21.2,
+      "duration_seconds": 79.94,
       "success": true
     },
     {
       "vuln_id": "CVE-2023-6378",
-      "duration_seconds": 34.86,
+      "duration_seconds": 71.28,
       "success": true
     },
     {
       "vuln_id": "CVE-2024-12798",
-      "duration_seconds": 28.15,
+      "duration_seconds": 62.52,
       "success": true
     },
     {
       "vuln_id": "CVE-2024-12801",
-      "duration_seconds": 22.45,
+      "duration_seconds": 73.16,
       "success": true
     },
     {
       "vuln_id": "CVE-2024-1597",
-      "duration_seconds": 39.95,
+      "duration_seconds": 87.29,
       "success": true
     },
     {
       "vuln_id": "CVE-2024-22243",
-      "duration_seconds": 30.71,
+      "duration_seconds": 71.05,
       "success": true
     },
     {
       "vuln_id": "CVE-2024-22259",
-      "duration_seconds": 25.77,
+      "duration_seconds": 62.42,
       "success": true
     },
     {
       "vuln_id": "CVE-2024-22262",
-      "duration_seconds": 34.71,
+      "duration_seconds": 91.85,
       "success": true
     },
     {
       "vuln_id": "CVE-2024-2236",
-      "duration_seconds": 32.63,
+      "duration_seconds": 73.68,
       "success": true
     },
     {
       "vuln_id": "CVE-2024-23672",
-      "duration_seconds": 57.09,
+      "duration_seconds": 89.81,
       "success": true
     },
     {
       "vuln_id": "CVE-2024-24549",
-      "duration_seconds": 26.87,
+      "duration_seconds": 85.83,
       "success": true
     },
     {
       "vuln_id": "CVE-2024-34750",
-      "duration_seconds": 36.35,
+      "duration_seconds": 86.51,
       "success": true
     },
     {
       "vuln_id": "CVE-2024-38809",
-      "duration_seconds": 25.5,
+      "duration_seconds": 75.79,
       "success": true
     },
     {
       "vuln_id": "CVE-2024-38816",
-      "duration_seconds": 30.4,
+      "duration_seconds": 70.79,
       "success": true
     },
     {
       "vuln_id": "CVE-2024-38819",
-      "duration_seconds": 27.71,
+      "duration_seconds": 68.66,
       "success": true
     },
     {
       "vuln_id": "CVE-2024-38820",
-      "duration_seconds": 35.19,
+      "duration_seconds": 70.87,
       "success": true
     },
     {
       "vuln_id": "CVE-2024-41996",
-      "duration_seconds": 32.44,
+      "duration_seconds": 65.32,
       "success": true
     },
     {
       "vuln_id": "CVE-2024-50379",
-      "duration_seconds": 29.49,
+      "duration_seconds": 75.95,
       "success": true
     },
     {
       "vuln_id": "CVE-2024-56337",
-      "duration_seconds": 27.32,
+      "duration_seconds": 111.88,
       "success": true
     },
     {
       "vuln_id": "CVE-2024-56433",
-      "duration_seconds": 33.67,
+      "duration_seconds": 83.59,
       "success": true
     },
     {
       "vuln_id": "CVE-2025-0167",
-      "duration_seconds": 18.46,
+      "duration_seconds": 65.11,
       "success": true
     },
     {
       "vuln_id": "CVE-2025-10148",
-      "duration_seconds": 39.05,
+      "duration_seconds": 143.78,
       "success": true
     },
     {
       "vuln_id": "CVE-2025-11226",
-      "duration_seconds": 28.61,
+      "duration_seconds": 64.83,
       "success": true
     },
     {
       "vuln_id": "CVE-2025-22233",
-      "duration_seconds": 35.47,
+      "duration_seconds": 47.63,
       "success": true
     },
     {
       "vuln_id": "CVE-2025-22235",
-      "duration_seconds": 25.65,
+      "duration_seconds": 84.8,
       "success": true
     },
     {
       "vuln_id": "CVE-2025-24813",
-      "duration_seconds": 35.71,
+      "duration_seconds": 106.96,
       "success": true
     },
     {
       "vuln_id": "CVE-2025-31650",
-      "duration_seconds": 41.7,
+      "duration_seconds": 89.89,
       "success": true
     },
     {
       "vuln_id": "CVE-2025-31651",
-      "duration_seconds": 32.14,
+      "duration_seconds": 79.57,
       "success": true
     },
     {
       "vuln_id": "CVE-2025-41234",
-      "duration_seconds": 36.07,
+      "duration_seconds": 53.72,
       "success": true
     },
     {
       "vuln_id": "CVE-2025-41242",
-      "duration_seconds": 19.41,
+      "duration_seconds": 91.15,
       "success": true
     },
     {
       "vuln_id": "CVE-2025-41249",
-      "duration_seconds": 36.77,
+      "duration_seconds": 76.39,
       "success": true
     },
     {
       "vuln_id": "CVE-2025-45582",
-      "duration_seconds": 32.27,
+      "duration_seconds": 60.95,
       "success": true
     },
     {
       "vuln_id": "CVE-2025-46701",
-      "duration_seconds": 27.33,
+      "duration_seconds": 95.38,
       "success": true
     },
     {
       "vuln_id": "CVE-2025-48924",
-      "duration_seconds": 37.21,
+      "duration_seconds": 68.52,
       "success": true
     },
     {
       "vuln_id": "CVE-2025-48988",
-      "duration_seconds": 33.18,
+      "duration_seconds": 77.35,
       "success": true
     },
     {
       "vuln_id": "CVE-2025-48989",
-      "duration_seconds": 38.76,
+      "duration_seconds": 84.76,
       "success": true
     },
     {
       "vuln_id": "CVE-2025-49124",
-      "duration_seconds": 24.75,
+      "duration_seconds": 76.35,
       "success": true
     },
     {
       "vuln_id": "CVE-2025-49125",
-      "duration_seconds": 39.18,
+      "duration_seconds": 97.64,
       "success": true
     },
     {
       "vuln_id": "CVE-2025-55752",
-      "duration_seconds": 33.81,
+      "duration_seconds": 112.98,
       "success": true
     },
     {
       "vuln_id": "CVE-2025-55754",
-      "duration_seconds": 33.32,
+      "duration_seconds": 72.58,
       "success": true
     },
     {
       "vuln_id": "CVE-2025-61795",
-      "duration_seconds": 33.84,
+      "duration_seconds": 73.72,
       "success": true
     },
     {
       "vuln_id": "CVE-2025-8114",
-      "duration_seconds": 24.61,
+      "duration_seconds": 70.17,
       "success": true
     },
     {
       "vuln_id": "CVE-2025-8941",
-      "duration_seconds": 36.85,
+      "duration_seconds": 95.17,
       "success": true
     },
     {
       "vuln_id": "CVE-2025-9086",
-      "duration_seconds": 39.26,
+      "duration_seconds": 89.74,
       "success": true
     },
     {
       "vuln_id": "GHSA-24rp-q3w6-vc56",
-      "duration_seconds": 22.77,
+      "duration_seconds": 79.57,
       "success": true
     },
     {
       "vuln_id": "GHSA-25qh-j22f-pwp8",
-      "duration_seconds": 38.75,
+      "duration_seconds": 74.55,
       "success": true
     },
     {
       "vuln_id": "GHSA-27hp-xhwr-wr2m",
-      "duration_seconds": 20.09,
+      "duration_seconds": 69.7,
       "success": true
     },
     {
       "vuln_id": "GHSA-2rmj-mq67-h97g",
-      "duration_seconds": 29.71,
+      "duration_seconds": 83.2,
       "success": true
     },
     {
       "vuln_id": "GHSA-2wrp-6fg6-hmc5",
-      "duration_seconds": 22.36,
+      "duration_seconds": 64.03,
       "success": true
     },
     {
       "vuln_id": "GHSA-3p2h-wqq4-wf4h",
-      "duration_seconds": 35.28,
+      "duration_seconds": 63.22,
       "success": true
     },
     {
       "vuln_id": "GHSA-42wg-hm62-jcwg",
-      "duration_seconds": 39.16,
+      "duration_seconds": 104.62,
       "success": true
     },
     {
       "vuln_id": "GHSA-4gc7-5j7h-4qph",
-      "duration_seconds": 32.58,
+      "duration_seconds": 76.37,
       "success": true
     },
     {
       "vuln_id": "GHSA-4wp7-92pw-q264",
-      "duration_seconds": 21.86,
+      "duration_seconds": 104.37,
       "success": true
     },
     {
       "vuln_id": "GHSA-5j33-cvvr-w245",
-      "duration_seconds": 32.17,
+      "duration_seconds": 91.52,
       "success": true
     },
     {
       "vuln_id": "GHSA-6r3c-xf4w-jxjm",
-      "duration_seconds": 42.62,
+      "duration_seconds": 70.98,
       "success": true
     },
     {
       "vuln_id": "GHSA-6v67-2wr5-gvf4",
-      "duration_seconds": 20.43,
+      "duration_seconds": 43.75,
       "success": true
     },
     {
       "vuln_id": "GHSA-7w75-32cg-r6g2",
-      "duration_seconds": 35.81,
+      "duration_seconds": 73.15,
       "success": true
     },
     {
       "vuln_id": "GHSA-83qj-6fr2-vhqg",
-      "duration_seconds": 36.52,
+      "duration_seconds": 81.33,
       "success": true
     },
     {
       "vuln_id": "GHSA-ccgv-vj62-xf9h",
-      "duration_seconds": 25.86,
+      "duration_seconds": 70.93,
       "success": true
     },
     {
       "vuln_id": "GHSA-cx7f-g6mp-7hqm",
-      "duration_seconds": 20.53,
+      "duration_seconds": 77.85,
       "success": true
     },
     {
       "vuln_id": "GHSA-ff77-26x5-69cr",
-      "duration_seconds": 33.24,
+      "duration_seconds": 81.62,
       "success": true
     },
     {
       "vuln_id": "GHSA-g5vr-rgqm-vf78",
-      "duration_seconds": 32.49,
+      "duration_seconds": 71.47,
       "success": true
     },
     {
       "vuln_id": "GHSA-gqp3-2cvr-x8m3",
-      "duration_seconds": 32.9,
+      "duration_seconds": 93.09,
       "success": true
     },
     {
       "vuln_id": "GHSA-h2fw-rfh5-95r3",
-      "duration_seconds": 33.31,
+      "duration_seconds": 80.46,
       "success": true
     },
     {
       "vuln_id": "GHSA-h3gc-qfqq-6h8f",
-      "duration_seconds": 36.23,
+      "duration_seconds": 65.9,
       "success": true
     },
     {
       "vuln_id": "GHSA-hgjh-9rj2-g67j",
-      "duration_seconds": 23.1,
+      "duration_seconds": 68.41,
       "success": true
     },
     {
       "vuln_id": "GHSA-hgrr-935x-pq79",
-      "duration_seconds": 25.08,
+      "duration_seconds": 65.16,
       "success": true
     },
     {
       "vuln_id": "GHSA-j288-q9x7-2f5v",
-      "duration_seconds": 46.41,
+      "duration_seconds": 77.4,
       "success": true
     },
     {
       "vuln_id": "GHSA-jmp9-x22r-554x",
-      "duration_seconds": 39.72,
+      "duration_seconds": 65.69,
       "success": true
     },
     {
       "vuln_id": "GHSA-pr98-23f8-jwxv",
-      "duration_seconds": 33.37,
+      "duration_seconds": 75.06,
       "success": true
     },
     {
       "vuln_id": "GHSA-r936-gwx5-v52f",
-      "duration_seconds": 34.16,
+      "duration_seconds": 62.84,
       "success": true
     },
     {
       "vuln_id": "GHSA-rc42-6c7j-7h5r",
-      "duration_seconds": 34.02,
+      "duration_seconds": 63.71,
       "success": true
     },
     {
       "vuln_id": "GHSA-v682-8vv8-vpwr",
-      "duration_seconds": 27.06,
+      "duration_seconds": 96.38,
       "success": true
     },
     {
       "vuln_id": "GHSA-vfww-5hm6-hx2j",
-      "duration_seconds": 35.95,
+      "duration_seconds": 66.97,
       "success": true
     },
     {
       "vuln_id": "GHSA-vmq6-5m68-f53m",
-      "duration_seconds": 22.69,
+      "duration_seconds": 69.95,
       "success": true
     },
     {
       "vuln_id": "GHSA-wc4r-xq3c-5cf3",
-      "duration_seconds": 35.67,
+      "duration_seconds": 80.95,
       "success": true
     },
     {
       "vuln_id": "GHSA-wm9w-rjj3-j356",
-      "duration_seconds": 37.41,
+      "duration_seconds": 72.51,
       "success": true
     },
     {
       "vuln_id": "GHSA-wmwf-9ccg-fff5",
-      "duration_seconds": 32.07,
+      "duration_seconds": 72.24,
       "success": true
     },
     {
       "vuln_id": "dockerfile.security.missing-user-entrypoint.missing-user-entrypoint",
-      "duration_seconds": 37.66,
+      "duration_seconds": 77.82,
       "success": true
     },
     {
       "vuln_id": "terraform.aws.security.aws-cloudwatch-log-group-unencrypted.aws-cloudwatch-log-group-unencrypted",
-      "duration_seconds": 31.56,
+      "duration_seconds": 70.04,
       "success": true
     },
     {
       "vuln_id": "terraform.aws.security.aws-db-instance-no-logging.aws-db-instance-no-logging",
-      "duration_seconds": 35.62,
+      "duration_seconds": 67.58,
       "success": true
     },
     {
       "vuln_id": "terraform.aws.security.aws-ec2-launch-template-metadata-service-v1-enabled.aws-ec2-launch-template-metadata-service-v1-enabled",
-      "duration_seconds": 32.98,
+      "duration_seconds": 88.94,
       "success": true
     },
     {
       "vuln_id": "terraform.aws.security.aws-ecr-mutable-image-tags.aws-ecr-mutable-image-tags",
-      "duration_seconds": 22.78,
+      "duration_seconds": 88.8,
       "success": true
     },
     {
       "vuln_id": "terraform.aws.security.aws-subnet-has-public-ip-address.aws-subnet-has-public-ip-address",
-      "duration_seconds": 35.84,
+      "duration_seconds": 68.23,
       "success": true
     },
     {
       "vuln_id": "yaml.docker-compose.security.no-new-privileges.no-new-privileges",
-      "duration_seconds": 38.99,
+      "duration_seconds": 78.25,
       "success": true
     },
     {
       "vuln_id": "yaml.docker-compose.security.writable-filesystem-service.writable-filesystem-service",
-      "duration_seconds": 32.05,
+      "duration_seconds": 76.42,
       "success": true
     }
   ],
-  "end_time": "2025-11-01T02:20:53.685079",
+  "end_time": "2025-11-08T04:56:07.210255",
   "completion_rate_percent": 100.0,
-  "avg_latency_seconds": 31.57
+  "avg_latency_seconds": 78.92
 }

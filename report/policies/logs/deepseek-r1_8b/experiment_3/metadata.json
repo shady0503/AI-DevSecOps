@@ -1,0 +1,48 @@
+{
+  "model": "deepseek-r1:8b",
+  "experiment": "3",
+  "start_time": "2025-11-09T21:36:59.925325",
+  "timeout_seconds": 300,
+  "rag_config": {
+    "enabled": true,
+    "top_k": 2,
+    "namespace": "compliance-rag",
+    "chunk_size": 200,
+    "source": "Morocco AI Governance Framework",
+    "source_documents": {
+      "document_1": {
+        "id": "1754384763746",
+        "title": "AI Maturity in Practice: A Cognitive Audit of Digital Morocco 2030",
+        "author": "Asmae Lamgari",
+        "chunks": 45,
+        "focus": "AI maturity assessment, digital transformation strategies"
+      },
+      "document_2": {
+        "id": "1755695236695",
+        "title": "Operationalizing AI Sovereignty in Morocco",
+        "author": "Asmae Lamgari",
+        "chunks": 101,
+        "focus": "AI governance, sovereignty frameworks, regulatory considerations"
+      }
+    },
+    "total_vectors": 146,
+    "embedder": "all-MiniLM-L6-v2",
+    "vector_dimension": 384,
+    "similarity_metric": "cosine",
+    "author_attribution": "Asmae Lamgari - Morocco AI Research & Governance Framework"
+  },
+  "total_vulnerabilities": 1,
+  "successful_generations": 1,
+  "failed_generations": 0,
+  "total_duration_seconds": 111.62786388397217,
+  "policy_ids_processed": [
+    {
+      "vuln_id": "10021",
+      "duration_seconds": 111.63,
+      "success": true
+    }
+  ],
+  "end_time": "2025-11-09T21:38:52.054159",
+  "completion_rate_percent": 100.0,
+  "avg_latency_seconds": 111.62786388397217
+}

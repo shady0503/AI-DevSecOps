@@ -1,0 +1,49 @@
+{
+  "generated_at": "2025-11-08T08:55:45.409264",
+  "experiment_configuration": {
+    "exp1_timeout_seconds": 300,
+    "exp2_timeouts": {
+      "deepseek-r1:8b": 600,
+      "deepseek-r1:14b": 900,
+      "llama3.1": 300,
+      "gpt-oss:20b": 300
+    },
+    "rag_top_k": 2,
+    "chunk_size": 200,
+    "random_seed": 42,
+    "policies_sorted": true,
+    "corrected_prompts": true
+  },
+  "comparison": [
+    {
+      "model": "deepseek-r1:8b",
+      "experiment": "2",
+      "completion_rate_percent": 100.0,
+      "avg_latency_seconds": 78.92,
+      "timeout_seconds": 600,
+      "successful_generations": 122,
+      "failed_generations": 0,
+      "total_duration_seconds": 9628.83
+    },
+    {
+      "model": "gpt-oss:20b",
+      "experiment": "2",
+      "completion_rate_percent": 98.36,
+      "avg_latency_seconds": 114.37,
+      "timeout_seconds": 300,
+      "successful_generations": 120,
+      "failed_generations": 2,
+      "total_duration_seconds": 13953.18
+    },
+    {
+      "model": "llama3.1",
+      "experiment": "2",
+      "completion_rate_percent": 100.0,
+      "avg_latency_seconds": 19.11,
+      "timeout_seconds": 300,
+      "successful_generations": 122,
+      "failed_generations": 0,
+      "total_duration_seconds": 2331.58
+    }
+  ]
+}
